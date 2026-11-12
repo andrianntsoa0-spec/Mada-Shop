@@ -202,11 +202,26 @@ header .logout{margin-left:auto;padding:9px 11px;background:#edf3ef;color:#36534
 </nav>
 </main></div>
 <div id="invoiceModal" class="modal"><div class="modal-box"><div class="modal-actions"><button class="btn2" id="closeInvoiceBtn">Fermer</button><button id="printInvoiceBtn">Imprimer / Enregistrer en PDF</button><button class="btn2" id="shareWaBtn">WhatsApp</button><button class="btn2" id="shareMailBtn">E-mail</button></div><div id="invoicePaper" class="invoice"></div></div></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+/* ====== CONFIGURATION FIREBASE (à remplir) ======
+   Tant que apiKey = "COLLEZ_ICI", l'application fonctionne en mode LOCAL (comme avant). */
+const FIREBASE_CONFIG={
+  apiKey:"AIzaSyAtkZo2lpLouCJlB1wceqcUClyIDZNHgdM",
+  authDomain:"mada-shop-29e6d.firebaseapp.com",
+  projectId:"mada-shop-29e6d",
+  storageBucket:"mada-shop-29e6d.firebasestorage.app",
+  messagingSenderId:"1045034889148",
+  appId:"1:1045034889148:web:564ef776c158cf374a45b9"
+};
+</script>
 <script>
 "use strict";
 const $=id=>document.getElementById(id);
 const read=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v===null?d:v}catch(e){return d}};
-const write=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const write=(k,v)=>{localStorage.setItem(k,JSON.stringify(v));cloudPush(k,JSON.stringify(v))};
+const setPw=p=>{setPw(p);cloudPush("madaAdminPassword",JSON.stringify(p))};
 let products=[],sales=[],clients=[],vendors=[],expenses=[],settings={},adminPassword="1234",currentUser=null,cart=[],editingProductId=null,invoiceCurrent=null;
 function loadAll(){products=read("madaProducts",[]);sales=read("madaSales",[]);clients=read("madaClients",[]);vendors=read("madaVendors",[]);expenses=read("madaExpenses",[]);settings=read("madaSettings",{shopName:"MADA SHOP",phone:"",address:""});adminPassword=localStorage.getItem("madaAdminPassword")||"1234"}
 function money(n){return (Number(n)||0).toLocaleString("fr-FR")+" Ar"}
@@ -302,7 +317,7 @@ function toggleVendor(id){if(!isAdmin())return;let v=vendors.find(x=>String(x.id
 function deleteVendor(id){if(!isAdmin()||!confirm("Supprimer ce compte vendeur ?"))return;vendors=vendors.filter(x=>String(x.id)!==String(id));write("madaVendors",vendors);renderVendors()}
 function changePassword(){if($("oldPassword").value!==adminPassword){notify("Ancien mot de passe incorrect");return}let p=$("newPassword").value;if(p.length<4){notify("Le nouveau mot de passe doit contenir au moins 4 caractères");return}adminPassword=p;localStorage.setItem("madaAdminPassword",p);$("oldPassword").value=$("newPassword").value="";notify("Mot de passe modifié")}
 function backup(){let data={products,sales,clients,vendors,expenses,settings,adminPassword,invoiceCounter:read("madaInvoiceCounter",{year:new Date().getFullYear(),count:0})};let blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="mada-shop-sauvegarde.json";a.click();URL.revokeObjectURL(a.href)}
-function restore(file){let r=new FileReader();r.onload=()=>{try{let d=JSON.parse(r.result);if(!d||!Array.isArray(d.products)||!Array.isArray(d.sales))throw Error();products=d.products; sales=d.sales;clients=Array.isArray(d.clients)?d.clients:[];vendors=Array.isArray(d.vendors)?d.vendors:[];expenses=Array.isArray(d.expenses)?d.expenses:[];settings=d.settings||{shopName:"MADA SHOP",phone:"",address:""};write("madaProducts",products);write("madaSales",sales);write("madaClients",clients);write("madaVendors",vendors);write("madaExpenses",expenses);write("madaSettings",settings);if(d.adminPassword){adminPassword=d.adminPassword;localStorage.setItem("madaAdminPassword",adminPassword)}if(d.invoiceCounter)write("madaInvoiceCounter",d.invoiceCounter);refreshAll();notify("Sauvegarde restaurée")}catch(e){notify("Fichier de sauvegarde invalide")}};r.readAsText(file)}
+function restore(file){let r=new FileReader();r.onload=()=>{try{let d=JSON.parse(r.result);if(!d||!Array.isArray(d.products)||!Array.isArray(d.sales))throw Error();products=d.products; sales=d.sales;clients=Array.isArray(d.clients)?d.clients:[];vendors=Array.isArray(d.vendors)?d.vendors:[];expenses=Array.isArray(d.expenses)?d.expenses:[];settings=d.settings||{shopName:"MADA SHOP",phone:"",address:""};write("madaProducts",products);write("madaSales",sales);write("madaClients",clients);write("madaVendors",vendors);write("madaExpenses",expenses);write("madaSettings",settings);if(d.adminPassword){adminPassword=d.adminPassword;setPw(adminPassword)}if(d.invoiceCounter)write("madaInvoiceCounter",d.invoiceCounter);refreshAll();notify("Sauvegarde restaurée")}catch(e){notify("Fichier de sauvegarde invalide")}};r.readAsText(file)}
 $("loginBtn").addEventListener("click",login);$("loginRole").addEventListener("change",updateLoginRole);$("loginPass").addEventListener("keydown",e=>{if(e.key==="Enter")login()});$("logoutBtn").addEventListener("click",logout);
 $("navigation").addEventListener("click",e=>{let b=e.target.closest("button[data-page]");if(b)showPage(b.dataset.page)});
 $("saveProductBtn").addEventListener("click",saveProduct);$("cancelProductBtn").addEventListener("click",cancelProductEdit);$("pHasStock").addEventListener("change",()=>$("stockField").classList.toggle("hidden",$("pHasStock").value==="no"));$("productSearch").addEventListener("input",renderProducts);
@@ -310,6 +325,34 @@ $("addClientBtn").addEventListener("click",addClient);$("clientSearch").addEvent
 $("saveExpenseBtn").addEventListener("click",saveExpense);$("expenseDate").value=localDateKey(new Date());$("reportWeekDate").value=localDateKey(new Date());$("reportWeekDate").addEventListener("change",renderWeeklyReport);$("exportWeeklyPdf").addEventListener("click",()=>{renderWeeklyReport();window.print()});$("addVendorBtn").addEventListener("click",addVendor);$("copyGeneratedCode").addEventListener("click",()=>{let code=$("generatedCode").textContent;if(!code)return;let fallback=()=>{let t=document.createElement("textarea");t.value=code;document.body.appendChild(t);t.select();document.execCommand("copy");t.remove();notify("Code copié")};if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(code).then(()=>notify("Code copié")).catch(fallback);else fallback()});$("saveSettingsBtn").addEventListener("click",saveSettings);$("changePasswordBtn").addEventListener("click",changePassword);$("backupBtn").addEventListener("click",backup);$("restoreBtn").addEventListener("click",()=>$("restoreFile").click());$("restoreFile").addEventListener("change",e=>{if(e.target.files[0])restore(e.target.files[0]);e.target.value=""});
 $("closeInvoiceBtn").addEventListener("click",()=>$("invoiceModal").classList.remove("show"));$("shareWaBtn").addEventListener("click",()=>shareInvoice("wa"));$("shareMailBtn").addEventListener("click",()=>shareInvoice("mail"));$("printInvoiceBtn").addEventListener("click",()=>window.print());
 loadAll();$("headerShopName").textContent=settings.shopName||"MADA SHOP";
+/* ====== SYNCHRONISATION EN LIGNE (Firebase Firestore) ====== */
+var cloudDb=null,cloudOn=false;
+const CLOUD_KEYS=["madaProducts","madaSales","madaClients","madaVendors","madaExpenses","madaSettings","madaInvoiceCounter","madaAdminPassword"];
+function cloudBadge(t,c){let b=document.getElementById("cloudBadge");if(!b){b=document.createElement("div");b.id="cloudBadge";b.style.cssText="position:fixed;left:8px;bottom:8px;z-index:9999;font:12px Arial;padding:4px 10px;border-radius:12px;color:#fff;opacity:.9;pointer-events:none";document.body.appendChild(b)}b.textContent=t;b.style.background=c}
+function cloudPush(k,json){if(!cloudDb)return;cloudDb.collection("mada").doc(k).set({data:json,t:Date.now()}).catch(e=>{console.error(e);cloudBadge("⚠ Erreur de synchronisation","#c73535")})}
+function cloudApply(){const keep=document.activeElement;if(keep&&/^(INPUT|SELECT|TEXTAREA)$/.test(keep.tagName)&&currentUser){clearTimeout(cloudApply.t);cloudApply.t=setTimeout(cloudApply,2500);return}loadAll();$("headerShopName").textContent=settings.shopName||"MADA SHOP";if(currentUser){if(!isAdmin()&&currentUser.username&&!vendors.some(v=>v.username===currentUser.username&&v.active!==false)){location.reload();return}refreshAll()}}
+function cloudStart(){
+ if(!FIREBASE_CONFIG.apiKey||FIREBASE_CONFIG.apiKey==="COLLEZ_ICI"||typeof firebase==="undefined"){cloudBadge("Mode local (non synchronisé)","#718078");return}
+ try{firebase.initializeApp(FIREBASE_CONFIG);cloudDb=firebase.firestore();cloudDb.enablePersistence({synchronizeTabs:true}).catch(()=>{})}catch(e){console.error(e);cloudBadge("⚠ Configuration Firebase invalide","#c73535");cloudDb=null;return}
+ cloudBadge("Synchronisation…","#2563eb");
+ let first=true;
+ cloudDb.collection("mada").onSnapshot(snap=>{
+  let changed=false;const seen=new Set();
+  snap.docChanges().forEach(ch=>{
+   const k=ch.doc.id;seen.add(k);if(!CLOUD_KEYS.includes(k)||ch.type==="removed")return;
+   const d=ch.doc.data();if(ch.doc.metadata.hasPendingWrites)return;
+   try{const incoming=d.data;if(localStorage.getItem(k)!==incoming){localStorage.setItem(k,incoming);changed=true}}catch(e){}
+  });
+  if(first){first=false;
+   CLOUD_KEYS.forEach(k=>{if(!seen.has(k)){const v=localStorage.getItem(k);if(v!==null)cloudPush(k,v)}});
+  }
+  cloudOn=!snap.metadata.fromCache;
+  cloudBadge(cloudOn?"☁ En ligne • synchronisé":"Hors ligne (sera synchronisé)",cloudOn?"#087b50":"#b7791f");
+  if(changed)cloudApply();
+ },err=>{console.error(err);cloudBadge("⚠ Accès refusé / erreur Firebase","#c73535")});
+}
+cloudStart();
+
 </script>
 </body>
 </html>
