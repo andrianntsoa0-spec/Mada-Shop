@@ -250,7 +250,7 @@ header .logout{margin-left:auto;padding:9px 11px;background:#edf3ef;color:#36534
  <button data-page="dashboard" class="active"><span>⌂</span>Accueil</button><button data-page="products"><span>▣</span>Produits</button><button data-page="clients"><span>♙</span>Clients</button><button data-page="sales"><span>＋</span>Vente</button><button data-page="history"><span>▤</span>Factures</button><button data-page="weeklyReport"><span>📊</span>Rapport hebdo</button><button data-page="vendors" class="adminOnly"><span>♧</span>Vendeurs</button><button data-page="expenses" class="adminOnly"><span>🛒</span>Achats / Dépenses</button><button data-page="settings" class="adminOnly"><span>⚙</span>Admin</button>
 </nav>
 </main></div>
-<div id="invoiceModal" class="modal"><div class="modal-box"><div class="modal-actions"><button class="btn2" id="closeInvoiceBtn">Fermer</button><button id="printInvoiceBtn">Imprimer / Enregistrer en PDF</button><button class="btn2" id="shareWaBtn">WhatsApp</button><button class="btn2" id="shareMailBtn">E-mail</button></div><div id="invoicePaper" class="invoice"></div></div></div>
+<div id="invoiceModal" class="modal"><div class="modal-box"><div class="modal-actions"><button class="btn2" id="closeInvoiceBtn">Fermer</button><button id="pdfInvoiceBtn">Enregistrer en PDF</button><button class="btn2" id="sharePdfBtn">Partager PDF</button><button class="btn2" id="printInvoiceBtn">Imprimer</button><button class="btn2" id="shareWaBtn">WhatsApp</button><button class="btn2" id="shareMailBtn">E-mail</button></div><div id="invoicePaper" class="invoice"></div></div></div>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
@@ -356,6 +356,60 @@ function invoiceHtml(s){
  <div class="inv-words"><div style="font-size:10px;color:#4b5750;margin-bottom:4px">Arrêtée la présente facture à la somme de :</div><strong>${esc(amountInWords(total))}</strong></div>
  <div class="inv-footer"><div class="inv-slogan"><span class="inv-line"></span><em>Votre style, notre mission</em><span class="inv-line"></span></div><div class="inv-thanks">Merci pour votre confiance !</div></div>`;
 }
+function pdfBuild(s){
+ const T=t=>String(t??"").replace(/[\u202f\u00a0]/g," ").replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/[–—]/g,"-").replace(/[^\x20-\xff]/g,"?");
+ const E=t=>T(t).replace(/([\\()])/g,"\\$1");
+ const H=842,G="0.03 0.48 0.31",GR="0.45 0.49 0.47",INK="0.1 0.15 0.12",W="1 1 1";
+ let pages=[],ops="",y=0;
+ const txt=(t,x,yy,sz,bold,c,al)=>{t=T(t);let w=t.length*sz*(bold?.56:.5);if(al==="r")x-=w;if(al==="c")x-=w/2;ops+=`BT /${bold?"F2":"F1"} ${sz} Tf ${c||INK} rg ${x.toFixed(1)} ${(H-yy).toFixed(1)} Td (${E(t)}) Tj ET\n`};
+ const rect=(x,yy,w,h,c)=>{ops+=`${c} rg ${x} ${H-yy-h} ${w} ${h} re f\n`};
+ const line=(x1,yy,x2,c,wd)=>{ops+=`${c} RG ${wd||1} w ${x1} ${H-yy} m ${x2} ${H-yy} l S\n`};
+ const wrap=(t,n)=>{let out=[],cur="";String(t||"").split(/\s+/).forEach(w=>{if((cur+" "+w).trim().length>n&&cur){out.push(cur);cur=w}else cur=(cur+" "+w).trim()});if(cur)out.push(cur);return out.length?out:[""]};
+ const isAdm=s.sellerUsername==="admin";
+ const sName=isAdm&&settings.adminName?settings.adminName:(s.sellerName||"");
+ const sMail=isAdm&&settings.adminEmail?settings.adminEmail:(s.sellerEmail||"");
+ const sPhone=formatMgPhone((isAdm&&settings.adminPhone)?settings.adminPhone:(s.sellerPhone||""));
+ const cl=clients.find(c=>String(c.id)===String(s.clientId));
+ const cMail=s.clientEmail||cl?.email||"",cAddr=s.clientAddress||cl?.address||"";
+ const total=saleTotal(s),paid=Number(s.paid||0),items=getItems(s);
+ const d=new Date(s.date),ms=["Jan.","Fév.","Mar.","Avr.","Mai","Juin","Juil.","Août","Sept.","Oct.","Nov.","Déc."];
+ const dateText=String(d.getDate()).padStart(2,"0")+" "+ms[d.getMonth()]+" "+d.getFullYear();
+ const timeText=String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");
+ rect(0,0,595,6,G);
+ txt(settings.shopName||"MADA SHOP",40,52,22,1,G);
+ txt(settings.address||"",40,68,9,0,GR);txt(formatMgPhone(settings.phone||""),40,80,9,0,GR);if(settings.email)txt(settings.email,40,92,9,0,GR);
+ txt("FACTURE",555,48,14,1,G,"r");txt(s.invoiceNo||"",555,64,10,1,INK,"r");txt(dateText,555,78,9,0,GR,"r");txt(timeText,555,90,9,0,GR,"r");
+ line(40,104,555,G,1.5);
+ rect(40,116,250,76,"0.95 0.97 0.96");rect(305,116,250,76,"0.95 0.97 0.96");
+ txt("VENDEUR",50,131,8,1,G);txt(sName,50,146,10,1);txt("Tél. : "+sPhone,50,160,9);txt("E-mail : "+(sMail||"-"),50,173,9);
+ txt("CLIENT",315,131,8,1,G);txt(s.clientName||"Client de passage",315,146,10,1);txt("Contact : "+(formatMgPhone(s.clientPhone||"")||"-"),315,160,9);
+ let cy=173;if(cMail){txt("E-mail : "+cMail,315,cy,9);cy+=12}
+ if(s.delivery==="Livraison")txt("Livraison : "+(cAddr||"adresse non renseignée"),315,cy,9);
+ rect(40,206,515,22,G);txt("Produit",48,221,10,1,W);txt("Qté",330,221,10,1,W);txt("Prix unitaire",465,221,10,1,W,"r");txt("Total",547,221,10,1,W,"r");
+ y=246;
+ const np=()=>{pages.push(ops);ops="";y=50};
+ items.forEach(x=>{let ls=wrap(x.productName,50);if(y+ls.length*13>790)np();
+  ls.forEach((l,i)=>{txt(l,48,y+i*13,10);if(i===0){txt(String(x.qty),330,y,10);txt(money(x.price),465,y,10,0,INK,"r");txt(money(x.subtotal??x.qty*x.price),547,y,10,0,INK,"r")}});
+  y+=ls.length*13+5;line(40,y-4,555,"0.85 0.89 0.87",.6);y+=8});
+ if(y>640)np();
+ y+=10;
+ const row=(a,b,bold)=>{txt(a,340,y,10,bold);txt(b,555,y,10,1,INK,"r");y+=17};
+ row("Sous-total",money(s.subtotal??items.reduce((a,x)=>a+Number(x.subtotal||0),0)));
+ row("Livraison",money(s.deliveryFee||0));
+ rect(340,y-13,215,22,G);txt("TOTAL À PAYER",348,y+2,10,1,W);txt(money(total),547,y+2,10,1,W,"r");y+=26;
+ row("Payé",money(paid));row("Reste à payer",money(Math.max(0,total-paid)));row("Statut",statusOf(s));
+ y+=10;rect(40,y,515,44,"0.97 0.99 0.98");txt("Arrêtée la présente facture à la somme de :",50,y+16,9,0,GR);txt(amountInWords(total),50,y+33,10,1);y+=80;
+ txt("Votre style, notre mission",297,y,14,1,G,"c");txt("Merci pour votre confiance !",297,y+18,9,0,GR,"c");
+ pages.push(ops);
+ let objs=["<</Type/Catalog/Pages 2 0 R>>","<</Type/Pages/Count "+pages.length+"/Kids["+pages.map((_,i)=>(5+2*i)+" 0 R").join(" ")+"]>>","<</Type/Font/Subtype/Type1/BaseFont/Helvetica/Encoding/WinAnsiEncoding>>","<</Type/Font/Subtype/Type1/BaseFont/Helvetica-Bold/Encoding/WinAnsiEncoding>>"];
+ pages.forEach((c,i)=>{objs.push("<</Type/Page/Parent 2 0 R/MediaBox[0 0 595 842]/Resources<</Font<</F1 3 0 R/F2 4 0 R>>>>/Contents "+(6+2*i)+" 0 R>>");objs.push("<</Length "+c.length+">>\nstream\n"+c+"endstream")});
+ let out="%PDF-1.4\n",offs=[];objs.forEach((o,i)=>{offs.push(out.length);out+=(i+1)+" 0 obj\n"+o+"\nendobj\n"});
+ let xr=out.length;out+="xref\n0 "+(objs.length+1)+"\n0000000000 65535 f \n"+offs.map(o=>String(o).padStart(10,"0")+" 00000 n \n").join("")+"trailer\n<</Size "+(objs.length+1)+"/Root 1 0 R>>\nstartxref\n"+xr+"\n%%EOF";
+ return Uint8Array.from(out,ch=>ch.charCodeAt(0)&255);
+}
+function invoicePdf(share){if(!invoiceCurrent)return;try{let bytes=pdfBuild(invoiceCurrent),name="Facture-"+invoiceCurrent.invoiceNo+".pdf",file=new File([bytes],name,{type:"application/pdf"});
+ if(share&&navigator.canShare&&navigator.canShare({files:[file]})){navigator.share({files:[file],title:name}).catch(()=>{});return}
+ let a=document.createElement("a");a.href=URL.createObjectURL(file);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);notify("PDF enregistré : "+name)}catch(e){console.error(e);notify("Erreur PDF")}}
 function openInvoice(id){let s=sales.find(x=>String(x.id)===String(id));if(!s)return;invoiceCurrent=s;$("invoicePaper").innerHTML=invoiceHtml(s);$("invoiceModal").classList.add("show")}
 function shareInvoice(kind){if(!invoiceCurrent)return;let s=invoiceCurrent,cl=clients.find(c=>String(c.id)===String(s.clientId)),mail=s.clientEmail||cl?.email||"",txt=`Facture ${s.invoiceNo} - ${settings.shopName||"MADA SHOP"}\nClient: ${s.clientName}\nTotal: ${money(saleTotal(s))}\nPayé: ${money(s.paid||0)}\nStatut: ${statusOf(s)}\n\nVeuillez trouver votre facture. Le PDF peut être joint après son enregistrement.`;let url=kind==="wa"?"https://wa.me/"+formatMgPhone(s.clientPhone||"").replace(/\D/g,"")+"?text="+encodeURIComponent(txt):"mailto:"+mail+"?subject="+encodeURIComponent("Facture "+s.invoiceNo)+"&body="+encodeURIComponent(txt);window.open(url,"_blank")}
 function loadSettingsForm(){$("shopName").value=settings.shopName||"MADA SHOP";$("shopPhone").value=settings.phone||"";$("shopAddress").value=settings.address||"";$("shopEmail").value=settings.email||"";$("adminName").value=settings.adminName||"";$("adminPhone").value=settings.adminPhone||"";$("adminEmail").value=settings.adminEmail||""}
@@ -384,7 +438,7 @@ $("navigation").addEventListener("click",e=>{let b=e.target.closest("button[data
 $("saveProductBtn").addEventListener("click",saveProduct);$("cancelProductBtn").addEventListener("click",cancelProductEdit);$("pHasStock").addEventListener("change",()=>$("stockField").classList.toggle("hidden",$("pHasStock").value==="no"));$("productSearch").addEventListener("input",renderProducts);
 $("addClientBtn").addEventListener("click",addClient);$("clientSearch").addEventListener("input",renderClients);$("saleProduct").addEventListener("change",fillSalePrice);$("addCartBtn").addEventListener("click",addCartItem);$("reception").addEventListener("change",()=>{$("deliveryBox").classList.toggle("hidden",$("reception").value!=="Livraison");renderCart()});$("deliveryFee").addEventListener("input",renderCart);$("saveSaleBtn").addEventListener("click",saveSale);$("historySearch").addEventListener("input",renderHistory);
 $("saveExpenseBtn").addEventListener("click",saveExpense);$("expenseDate").value=localDateKey(new Date());$("reportWeekDate").value=localDateKey(new Date());$("reportWeekDate").addEventListener("change",renderWeeklyReport);$("exportWeeklyPdf").addEventListener("click",()=>{renderWeeklyReport();doPrint("print-report","A4 portrait","Rapport hebdomadaire")});$("addVendorBtn").addEventListener("click",addVendor);$("copyGeneratedCode").addEventListener("click",()=>{let code=$("generatedCode").textContent;if(!code)return;let fallback=()=>{let t=document.createElement("textarea");t.value=code;document.body.appendChild(t);t.select();document.execCommand("copy");t.remove();notify("Code copié")};if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(code).then(()=>notify("Code copié")).catch(fallback);else fallback()});$("saveSettingsBtn").addEventListener("click",saveSettings);$("changePasswordBtn").addEventListener("click",changePassword);$("backupBtn").addEventListener("click",backup);$("restoreBtn").addEventListener("click",()=>$("restoreFile").click());$("restoreFile").addEventListener("change",e=>{if(e.target.files[0])restore(e.target.files[0]);e.target.value=""});
-$("closeInvoiceBtn").addEventListener("click",()=>$("invoiceModal").classList.remove("show"));$("shareWaBtn").addEventListener("click",()=>shareInvoice("wa"));$("shareMailBtn").addEventListener("click",()=>shareInvoice("mail"));$("printInvoiceBtn").addEventListener("click",()=>doPrint("print-invoice","A4 portrait","Facture "+(invoiceCurrent?invoiceCurrent.invoiceNo:"")));
+$("pdfInvoiceBtn").addEventListener("click",()=>invoicePdf(false));$("sharePdfBtn").addEventListener("click",()=>invoicePdf(true));$("closeInvoiceBtn").addEventListener("click",()=>$("invoiceModal").classList.remove("show"));$("shareWaBtn").addEventListener("click",()=>shareInvoice("wa"));$("shareMailBtn").addEventListener("click",()=>shareInvoice("mail"));$("printInvoiceBtn").addEventListener("click",()=>doPrint("print-invoice","A4 portrait","Facture "+(invoiceCurrent?invoiceCurrent.invoiceNo:"")));
 loadAll();$("headerShopName").textContent=settings.shopName||"MADA SHOP";
 /* ====== SYNCHRONISATION EN LIGNE (Firebase Firestore) ====== */
 var cloudDb=null,cloudOn=false;
