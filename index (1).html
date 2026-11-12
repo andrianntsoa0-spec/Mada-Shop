@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#087b50">
+<title>MADA SHOP — Gestion de vente</title>
+<style>
+:root{--green:#087b50;--green2:#075b3d;--pale:#eaf5ef;--bg:#f3f6f4;--ink:#1d2923;--muted:#718078;--line:#e5ece7;--red:#c73535;--blue:#2563eb}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,Helvetica,sans-serif;font-size:14px}
+button,input,select,textarea{font:inherit}
+button{border:0;border-radius:10px;padding:12px 14px;background:var(--green);color:#fff;font-weight:700;cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
+input,select,textarea{width:100%;padding:12px;border:1px solid #dce5df;border-radius:9px;background:#fff;outline:none;color:var(--ink)}
+input:focus,select:focus,textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px #087b5018}
+label{display:block;margin:12px 0 6px;font-weight:700;font-size:12px;color:#506057}
+h1,h2,h3,p{margin-top:0}h3{font-size:16px;margin-bottom:13px}
+.hidden{display:none!important}.muted{color:var(--muted);font-size:12px}
+header{background:#fff;padding:12px 15px;display:flex;align-items:center;gap:11px;box-shadow:0 2px 9px #0000000c;position:sticky;top:0;z-index:5}
+header img{width:44px;height:44px;object-fit:contain;border-radius:10px}
+header h2{font-size:17px;margin:0;color:var(--green2)}header small{color:var(--muted);font-size:11px}
+header .logout{margin-left:auto;padding:9px 11px;background:#edf3ef;color:#365346;font-size:12px}
+.container{max-width:1000px;margin:auto;padding:14px 12px 8px}
+.page{display:none}.page.active{display:block}
+.card{background:#fff;border-radius:14px;padding:15px;margin-bottom:12px;box-shadow:0 2px 10px #14251b09;border:1px solid #edf1ee}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.stat{background:#fff;border:1px solid #e8eee9;border-radius:14px;padding:13px;min-width:0;box-shadow:0 2px 9px #14251b08}
+.stat-top{display:flex;align-items:center;justify-content:space-between;gap:5px;margin-bottom:10px}
+.stat-icon{width:34px;height:34px;border-radius:11px;background:#e8f5ee;display:grid;place-items:center;font-size:18px}
+.stat small{color:#748078;font-size:11px;font-weight:700;line-height:1.3}
+.stat strong{display:block;color:#075b3d;font-size:clamp(16px,4.5vw,22px);overflow-wrap:anywhere;line-height:1.2}
+.section-title{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.section-title h3{margin:0}
+.item{padding:12px 0;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:0}
+.itemhead{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.itemhead strong{overflow-wrap:anywhere}
+.actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.actions button,.small{padding:8px 10px;font-size:11px}
+.btn2{background:#eaf2ed;color:#24543e}.btnred{background:#fff0f0;color:#b42323}.btnblue{background:#eaf1ff;color:#2454b5}
+.row{display:flex;gap:10px;align-items:end}.row>*{flex:1;min-width:0}
+.total{font-size:19px;color:var(--green);font-weight:800}
+.nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;background:#fff;padding:11px;border-radius:14px;box-shadow:0 2px 9px #00000010;margin:12px auto 20px;max-width:830px}
+.nav button{min-height:76px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:8px 3px;background:#eaf5ef;color:#155f45;font-size:11px;line-height:1.2}
+.nav button span{font-size:22px;line-height:1}.nav button.active{background:var(--green);color:white}
+#loginScreen{min-height:100vh;display:grid;place-items:center;padding:20px;background:linear-gradient(145deg,#e7f4ec,#f6f8f6)}
+.login-card{width:min(100%,390px);text-align:center;padding:25px}
+.login-card img{width:90px;height:90px;object-fit:contain}.login-card h1{font-size:23px;color:var(--green);margin:10px 0 5px}
+#toast{display:none;position:fixed;top:14px;left:50%;transform:translateX(-50%);background:#202923;color:#fff;padding:12px 16px;border-radius:10px;z-index:200;font-size:13px;max-width:92%;text-align:center;box-shadow:0 5px 20px #0003}
+.modal{display:none;position:fixed;inset:0;background:#0008;z-index:100;overflow:auto;padding:12px}.modal.show{display:block}
+.modal-box{max-width:760px;margin:0 auto;background:white;border-radius:14px;padding:15px}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+/* Facture sobre, compacte et lisible sur mobile / ordinateur */
+.invoice{color:#242b27;background:#fff;padding:15px;font-family:Arial,Helvetica,sans-serif;width:100%;max-width:760px;margin:auto;border:1px solid #e1e6e2}
+.invoice h2{color:#344c40;margin:0 0 6px}.invoice .inv-top{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;border-bottom:1.5px solid #9eaaa2;padding-bottom:10px}
+.invoice .inv-brand{font-size:21px;font-weight:800;letter-spacing:.3px;color:#344c40}.invoice .inv-meta{text-align:right}
+.invoice .inv-label{font-size:16px;letter-spacing:1.1px;color:#344c40;font-weight:800}
+.invoice .inv-no{font-size:9px;font-weight:600;color:#59645d;margin:2px 0;letter-spacing:.1px;overflow-wrap:anywhere}
+.invoice .inv-details{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.invoice .inv-panel{background:#f7f8f7;border:1px solid #e7ebe8;border-radius:6px;padding:8px 10px;font-size:10.5px;line-height:1.45;min-width:0}
+.invoice table{width:100%;border-collapse:collapse;margin:9px 0}.invoice th{padding:7px 8px;background:#52695b;color:white;text-align:left;font-size:10px;font-weight:600}
+.invoice td{padding:6px 7px;border-bottom:1px solid #e7ebe8;text-align:left;font-size:10px}.invoice tbody tr:nth-child(even){background:#fafbfa}.invoice .right{text-align:right}
+.invoice .inv-totals{max-width:260px;margin:9px 0 0 auto}.invoice .inv-totals p{display:flex;justify-content:space-between;gap:10px;margin:5px 0;font-size:10px}
+.invoice .inv-grand{padding:6px 8px;background:#f3f5f3;border-radius:5px;color:#344c40;font-size:11px!important;font-weight:700}
+.invoice .inv-words{margin-top:8px;padding:7px 9px;border:1px dashed #b9c2bc;border-radius:6px;font-size:10px;line-height:1.4}
+.invoice .inv-footer{margin-top:10px;padding-top:7px;border-top:1px solid #e7ebe8;text-align:center;color:#405d4d;font-weight:700;font-size:11px}
+@media(max-width:600px){
+ .invoice{padding:10px;border-radius:6px}.invoice .inv-top{gap:7px;padding-bottom:8px}.invoice .inv-brand{font-size:18px}.invoice .inv-meta{text-align:left}
+ .invoice .inv-details{grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}.invoice .inv-panel{padding:7px;font-size:9px}
+ .invoice table{display:table;table-layout:auto;white-space:normal}.invoice th,.invoice td{padding:5px 4px;font-size:9px}.invoice .inv-totals{max-width:100%}.invoice .inv-grand{font-size:11px!important}
+}
+@media(min-width:601px) and (max-width:900px){.invoice{padding:13px}}
+@media print{
+ .invoice{max-width:none;width:100%;border:0;padding:0;font-size:9pt;break-inside:avoid}
+ .invoice .inv-details{grid-template-columns:1fr 1fr}.invoice table{display:table;overflow:visible;white-space:normal}
+ .invoice .inv-top,.invoice .inv-details,.invoice table,.invoice .inv-totals,.invoice .inv-words,.invoice .inv-footer{break-inside:avoid}
+}
+.badge{display:inline-block;border-radius:20px;padding:4px 8px;background:#eef4ef;color:#315d45;font-size:10px;font-weight:700}
+#toast{pointer-events:none}
+@media(min-width:650px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}.container{padding:20px 18px}.stat{padding:16px}.nav{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:380px){.nav{gap:6px;padding:8px}.nav button{font-size:10px;min-height:70px}}
+@media print{
+ @page{size:A5 portrait;margin:8mm}
+ body *{visibility:hidden!important}
+ #invoiceModal,#invoiceModal *{visibility:visible!important}
+ #invoiceModal{display:block!important;position:absolute!important;inset:0!important;padding:0!important;background:white!important;overflow:visible!important}
+ .modal-actions{display:none!important}.modal-box{max-width:none!important;padding:0!important;border-radius:0!important}
+}
+
+
+.report-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.report-heading h3{margin-bottom:0}
+#exportWeeklyPdf{font-size:12px;padding:10px 13px}
+@media print{
+ @page{size:A4 portrait;margin:12mm}
+ body *{visibility:hidden!important}
+ #weeklyReport,#weeklyReport *{visibility:visible!important}
+ #weeklyReport{display:block!important;position:absolute!important;left:0!important;top:0!important;width:100%!important;margin:0!important;padding:0!important;background:#fff!important}
+ #weeklyReport .card{box-shadow:none!important;border:1px solid #ddd!important;break-inside:avoid;margin:0 0 12px!important}
+ #weeklyReport .print-hide{display:none!important}
+ #weeklyReport .grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+ #weeklyReport .stat{break-inside:avoid;border:1px solid #ddd!important}
+ #weeklyReport .item{break-inside:avoid}
+ #invoiceModal,#invoiceModal *{visibility:hidden!important;display:none!important}
+ header,.nav,#toast,.modal,.page:not(#weeklyReport){display:none!important}
+}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+<section id="loginScreen">
+ <div class="card login-card">
+  <img src="logo.png" onerror="this.style.display='none'" alt="Logo MADA SHOP">
+  <h1>MADA SHOP</h1><p class="muted">Application de gestion de vente</p>
+  <label for="loginRole" style="text-align:left">Type de compte</label>
+  <select id="loginRole" style="font-weight:700">
+   <option value="admin">ADMIN</option>
+   <option value="vendor">VENDEUR</option>
+  </select>
+  <label for="loginUser" style="text-align:left">Identifiant</label><input id="loginUser" value="admin" autocomplete="username">
+  <label for="loginPass" id="loginPassLabel" style="text-align:left">Mot de passe Admin</label><input id="loginPass" type="password" placeholder="Mot de passe Admin" autocomplete="current-password">
+  <button id="loginBtn" style="width:100%;margin-top:16px">SE CONNECTER</button>
+  <p class="muted" id="loginHelp" style="margin:14px 0 0">Première connexion Admin : admin / 1234</p>
+ </div>
+</section>
+<div id="app" class="hidden">
+<header><img src="logo.PNG" onerror="this.style.display='none'" alt="Logo"><div style="flex:1"><h2 id="headerShopName">MADA SHOP</h2><small id="userInfo"></small></div><button class="logout" id="logoutBtn">Déconnexion</button></header>
+<main class="container">
+<section id="dashboard" class="page active">
+ <div class="grid">
+  <div class="stat"><div class="stat-top"><small>VENTES AUJOURD'HUI</small><span class="stat-icon">📈</span></div><strong id="statToday">0 Ar</strong></div>
+  <div class="stat"><div class="stat-top"><small>TOTAL VENTES</small><span class="stat-icon">🧾</span></div><strong id="statTotalSales">0 Ar</strong></div>
+  <div class="stat"><div class="stat-top"><small>MONTANT ENCAISSÉ</small><span class="stat-icon">💰</span></div><strong id="statCash">0 Ar</strong></div>
+  <div class="stat"><div class="stat-top"><small>COMMANDES</small><span class="stat-icon">🧾</span></div><strong id="statCount">0</strong></div>
+  <div class="stat"><div class="stat-top"><small>PRODUITS</small><span class="stat-icon">📦</span></div><strong id="statProducts">0</strong></div>
+  <div class="stat"><div class="stat-top"><small>TOTAL DÉPENSES</small><span class="stat-icon">🧾</span></div><strong id="statExpenses">0 Ar</strong></div>
+  <div class="stat"><div class="stat-top"><small>CAISSE</small><span class="stat-icon">💵</span></div><strong id="statCaisse">0 Ar</strong></div>
+ </div>
+ <div class="card" style="margin-top:12px"><h3>Dernières ventes</h3><div id="recentSales"></div></div>
+</section>
+<section id="products" class="page">
+ <div class="card"><h3 id="productTitle">Ajouter un produit</h3>
+  <label>Nom du produit</label><input id="pName" placeholder="Nom du produit">
+  <label>Catégorie</label><input id="pCategory" placeholder="Catégorie">
+  <label>Prix de vente (Ar)</label><input id="pPrice" type="number" min="0" placeholder="Prix">
+  <label>Gestion du stock</label><select id="pHasStock"><option value="yes">Avec stock</option><option value="no">Sans stock</option></select>
+  <div id="stockField"><label>Quantité en stock</label><input id="pStock" type="number" min="0" value="0"></div>
+  <button id="saveProductBtn" style="width:100%;margin-top:14px">Enregistrer le produit</button><button class="btn2 hidden" id="cancelProductBtn" style="width:100%;margin-top:7px">Annuler</button>
+ </div>
+ <div class="card"><h3>Liste des produits</h3><input id="productSearch" placeholder="Rechercher un produit..."><div id="productList"></div></div>
+</section>
+<section id="clients" class="page">
+ <div class="card"><h3>Ajouter un client</h3><label>Nom du client</label><input id="cName" placeholder="Nom complet"><label>Téléphone</label><input id="cPhone" placeholder="Téléphone"><label>Adresse</label><input id="cAddress" placeholder="Adresse"><button id="addClientBtn" style="width:100%;margin-top:14px">Enregistrer le client</button></div>
+ <div class="card"><h3>Liste des clients</h3><input id="clientSearch" placeholder="Rechercher un client..."><div id="clientList"></div></div>
+</section>
+<section id="sales" class="page">
+ <div class="card"><h3>Nouvelle commande</h3><label>Client</label><select id="saleClient"><option value="">Client de passage</option></select><label>Produit</label><select id="saleProduct"><option value="">Choisir un produit</option></select>
+  <div class="row"><div><label>Quantité</label><input id="saleQty" type="number" min="1" value="1"></div><div><label>Prix unitaire (Ar)</label><input id="salePrice" type="number" min="0"></div></div>
+  <button id="addCartBtn" style="width:100%;margin-top:12px">＋ Ajouter l'article</button><hr><h3>Articles de la commande</h3><div id="cartList"><p class="muted">Aucun article ajouté.</p></div><div class="row"><strong>Sous-total</strong><strong id="subtotal">0 Ar</strong></div>
+ </div>
+ <div class="card"><h3>Livraison</h3><label>Mode de réception</label><select id="reception"><option value="Récupération">Récupération</option><option value="Livraison">Livraison</option></select><div id="deliveryBox" class="hidden"><label>Frais de livraison (Ar) — 0 si gratuit</label><input id="deliveryFee" type="number" min="0" value="0" placeholder="Saisir les frais de livraison"></div><div class="row" style="margin-top:12px"><strong>Total à payer</strong><strong class="total" id="grandTotal">0 Ar</strong></div></div>
+ <div class="card"><h3>Paiement</h3><label>Mode de paiement</label><select id="payment"><option>Espèces</option><option>Mobile Money</option><option>À la livraison</option></select><label>Montant reçu (Ar)</label><input id="paid" type="number" min="0" value="0"><label>Statut de paiement</label><select id="saleStatus"><option>Non payé</option><option>Acompte payé</option><option>Payé</option><option>Payé livré</option></select><button id="saveSaleBtn" style="width:100%;margin-top:15px">VALIDER LA COMMANDE</button></div>
+</section>
+<section id="history" class="page"><div class="card"><h3>Historique des factures</h3><input id="historySearch" placeholder="Rechercher facture, client ou produit..."><div id="historyList"></div></div></section>
+<section id="weeklyReport" class="page">
+ <div class="card">
+  <div class="report-heading"><h3>Rapport hebdomadaire</h3><button type="button" id="exportWeeklyPdf" class="print-hide">📄 Télécharger le rapport en PDF</button></div>
+  <label class="print-hide">Choisir une date dans la semaine</label>
+  <input id="reportWeekDate" class="print-hide" type="date">
+  <p class="muted" id="reportWeekRange" style="margin-top:10px"></p>
+  <div class="grid">
+   <div class="stat"><div class="stat-top"><small>TOTAL VENTE</small><span class="stat-icon">📈</span></div><strong id="weekSales">0 Ar</strong></div>
+   <div class="stat"><div class="stat-top"><small>DÉPENSES</small><span class="stat-icon">🧾</span></div><strong id="weekExpenses">0 Ar</strong></div>
+   <div class="stat"><div class="stat-top"><small>CAISSE</small><span class="stat-icon">💵</span></div><strong id="weekCash">0 Ar</strong></div>
+   <div class="stat"><div class="stat-top"><small>NOMBRE DE VENTES</small><span class="stat-icon">🛍️</span></div><strong id="weekCount">0</strong></div>
+  </div>
+ </div>
+ <div class="card"><h3>Détail par jour</h3><div id="weekDaily"></div></div>
+</section>
+<section id="vendors" class="page">
+ <div class="card"><h3>Créer un compte vendeur</h3><p class="muted">Admin uniquement : un code d’accès sera généré automatiquement.</p><label>Nom du vendeur</label><input id="vName" placeholder="Nom complet"><label>Téléphone du vendeur</label><input id="vPhone" type="tel" placeholder="Téléphone"><label>E-mail du vendeur</label><input id="vEmail" type="email" placeholder="Adresse e-mail"><label>Identifiant du vendeur</label><input id="vUsername" placeholder="Identifiant"><button id="addVendorBtn" style="width:100%;margin-top:14px">Créer le compte et générer le code</button><div id="newVendorCode" class="hidden" style="margin-top:12px;padding:12px;border-radius:10px;background:#eaf5ef"><strong>Code vendeur à communiquer :</strong><div id="generatedCode" style="font-size:25px;font-weight:800;letter-spacing:3px;color:#075b3d;margin:7px 0"></div><button type="button" class="btn2" id="copyGeneratedCode">Copier le code</button></div></div>
+ <div class="card"><h3>Liste des vendeurs</h3><div id="vendorList"></div></div>
+</section>
+<section id="expenses" class="page">
+ <div class="card"><h3>Enregistrer un achat / une dépense</h3>
+  <label>Type</label><select id="expenseType"><option value="Achat">Achat</option><option value="Autre dépense">Autre dépense</option></select>
+  <label>Désignation</label><input id="expenseName" placeholder="Ex. Achat de marchandises, transport...">
+  <label>Montant (Ar)</label><input id="expenseAmount" type="number" min="0" placeholder="Montant dépensé">
+  <label>Date</label><input id="expenseDate" type="date">
+  <button id="saveExpenseBtn" style="width:100%;margin-top:14px">Enregistrer la dépense</button>
+ </div>
+ <div class="card"><div class="section-title"><h3>Historique des achats / dépenses</h3><strong id="expensesTotal">0 Ar</strong></div><div id="expenseList"></div></div>
+</section>
+<section id="settings" class="page">
+ <div class="card"><h3>Paramètres de la boutique</h3><label>Nom de la boutique</label><input id="shopName"><label>Téléphone</label><input id="shopPhone"><label>Adresse</label><input id="shopAddress"><button id="saveSettingsBtn" style="width:100%;margin-top:14px">Enregistrer</button></div>
+ <div class="card"><h3>Mot de passe Admin</h3><label>Ancien mot de passe</label><input id="oldPassword" type="password"><label>Nouveau mot de passe</label><input id="newPassword" type="password"><button id="changePasswordBtn" style="width:100%;margin-top:12px">Modifier le mot de passe</button></div>
+ <div class="card"><h3>Sauvegarde</h3><button class="btnblue" id="backupBtn" style="width:100%">Exporter les données</button><button class="btn2" id="restoreBtn" style="width:100%;margin-top:8px">Importer une sauvegarde</button><input type="file" id="restoreFile" accept=".json" class="hidden"></div>
+</section>
+<nav class="nav" id="navigation">
+ <button data-page="dashboard" class="active"><span>⌂</span>Accueil</button><button data-page="products"><span>▣</span>Produits</button><button data-page="clients"><span>♙</span>Clients</button><button data-page="sales"><span>＋</span>Vente</button><button data-page="history"><span>▤</span>Factures</button><button data-page="weeklyReport"><span>📊</span>Rapport hebdo</button><button data-page="vendors" class="adminOnly"><span>♧</span>Vendeurs</button><button data-page="expenses" class="adminOnly"><span>🛒</span>Achats / Dépenses</button><button data-page="settings" class="adminOnly"><span>⚙</span>Admin</button>
+</nav>
+</main></div>
+<div id="invoiceModal" class="modal"><div class="modal-box"><div class="modal-actions"><button class="btn2" id="closeInvoiceBtn">Fermer</button><button id="printInvoiceBtn">Imprimer / Enregistrer en PDF</button><button class="btn2" id="shareWaBtn">WhatsApp</button><button class="btn2" id="shareMailBtn">E-mail</button></div><div id="invoicePaper" class="invoice"></div></div></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+/* ====== CONFIGURATION FIREBASE (à remplir) ======
+   Tant que apiKey = "COLLEZ_ICI", l'application fonctionne en mode LOCAL (comme avant). */
+const FIREBASE_CONFIG={
+  apiKey:"AIzaSyAtkZo2lpLouCJlB1wceqcUClyIDZNHgdM",
+  authDomain:"mada-shop-29e6d.firebaseapp.com",
+  projectId:"mada-shop-29e6d",
+  storageBucket:"mada-shop-29e6d.firebasestorage.app",
+  messagingSenderId:"1045034889148",
+  appId:"1:1045034889148:web:564ef776c158cf374a45b9"
+};
+</script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const read=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v===null?d:v}catch(e){return d}};
+const write=(k,v)=>{localStorage.setItem(k,JSON.stringify(v));cloudPush(k,JSON.stringify(v))};
+const setPw=p=>{setPw(p);cloudPush("madaAdminPassword",JSON.stringify(p))};
+let products=[],sales=[],clients=[],vendors=[],expenses=[],settings={},adminPassword="1234",currentUser=null,cart=[],editingProductId=null,invoiceCurrent=null;
+function loadAll(){products=read("madaProducts",[]);sales=read("madaSales",[]);clients=read("madaClients",[]);vendors=read("madaVendors",[]);expenses=read("madaExpenses",[]);settings=read("madaSettings",{shopName:"MADA SHOP",phone:"",address:""});adminPassword=localStorage.getItem("madaAdminPassword")||"1234"}
+function money(n){return (Number(n)||0).toLocaleString("fr-FR")+" Ar"}
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function notify(m){const t=$("toast");t.textContent=m;t.style.display="block";clearTimeout(notify.timer);notify.timer=setTimeout(()=>t.style.display="none",2500)}
+function isAdmin(){return currentUser?.role==="admin"}
+function visibleSales(){return sales}
+function getItems(s){if(Array.isArray(s.items))return s.items;if(s.productName)return [{productName:s.productName,qty:Number(s.qty)||1,price:Number(s.price)||0,subtotal:Number(s.subtotal??(Number(s.qty||1)*Number(s.price||0)))}];return []}
+function saleTotal(s){return Number(s.total??(getItems(s).reduce((a,x)=>a+Number(x.subtotal??x.qty*x.price),0)+Number(s.deliveryFee||0)))}
+function statusOf(s){if(s.status)return s.status;let total=saleTotal(s),paid=Number(s.paid||0);return paid<=0?"Non payé":paid<total?"Acompte payé":s.delivery==="Livraison"?"Payé livré":"Payé"}
+function dateKey(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function login(){let role=$("loginRole").value,u=$("loginUser").value.trim(),p=$("loginPass").value;if(role==="admin"){if(u!=="admin"||p!==adminPassword){notify("Identifiant ou mot de passe Admin incorrect");return}currentUser={username:"admin",name:"Administrateur",role:"admin"}}else{let v=vendors.find(x=>x.username===u&&(x.accessCode===p||x.password===p)&&x.active!==false);if(!v){notify("Identifiant ou code vendeur incorrect");return}currentUser={username:v.username,name:v.name,phone:v.phone||"",email:v.email||"",role:"vendor"}}$("loginScreen").classList.add("hidden");$("app").classList.remove("hidden");$("userInfo").textContent=currentUser.name+" • "+(isAdmin()?"ADMIN":"VENDEUR");document.querySelectorAll(".adminOnly").forEach(x=>x.classList.toggle("hidden",!isAdmin()));showPage("dashboard");refreshAll()}
+function updateLoginRole(){let admin=$("loginRole").value==="admin";$("loginPassLabel").textContent=admin?"Mot de passe Admin":"Code vendeur";$("loginPass").placeholder=admin?"Mot de passe Admin":"Code vendeur à 6 chiffres";$("loginHelp").textContent=admin?"Première connexion Admin : admin / 1234":"Identifiant sy code vendeur nomen'ny Admin";$("loginUser").value=admin?"admin":"";$("loginPass").value=""}
+function logout(){currentUser=null;cart=[];$("app").classList.add("hidden");$("loginScreen").classList.remove("hidden");$("loginPass").value=""}
+function showPage(id){if(["vendors","settings","expenses"].includes(id)&&!isAdmin()){notify("Accès réservé à Admin");return}document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));$(id).classList.add("active");document.querySelectorAll(".nav button").forEach(x=>x.classList.toggle("active",x.dataset.page===id));if(id==="sales"){renderSaleProducts();renderClientSelect();renderCart()}if(id==="history")renderHistory();if(id==="settings")loadSettingsForm();if(id==="vendors")renderVendors();if(id==="expenses")renderExpenses();if(id==="weeklyReport")renderWeeklyReport();if(id==="products")renderProducts();if(id==="clients")renderClients();if(id==="dashboard")renderDashboard();window.scrollTo(0,0)}
+function refreshAll(){renderDashboard();renderProducts();renderClients();renderSaleProducts();renderClientSelect();renderHistory();renderVendors();if($("weeklyReport"))renderWeeklyReport()}
+function totalExpenses(){return expenses.reduce((sum,e)=>sum+Number(e.amount||0),0)}
+function localDateKey(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function saleDateKey(s){let d=new Date(s.date);return Number.isNaN(d.getTime())?String(s.date||"").slice(0,10):localDateKey(d)}
+function renderWeeklyReport(){
+ let chosen=$("reportWeekDate").value||localDateKey(new Date()),base=new Date(chosen+"T12:00:00");
+ if(Number.isNaN(base.getTime()))base=new Date();
+ let monday=new Date(base);monday.setDate(base.getDate()-((base.getDay()+6)%7));
+ let days=Array.from({length:7},(_,i)=>{let d=new Date(monday);d.setDate(monday.getDate()+i);return d});
+ let start=localDateKey(days[0]),end=localDateKey(days[6]);
+ $("reportWeekRange").textContent="Du "+days[0].toLocaleDateString("fr-FR")+" au "+days[6].toLocaleDateString("fr-FR");
+ let validSales=sales.filter(x=>!x.cancelled&&saleDateKey(x)>=start&&saleDateKey(x)<=end);
+ let validExpenses=expenses.filter(x=>String(x.date||"")>=start&&String(x.date||"")<=end);
+ let st=validSales.reduce((a,x)=>a+saleTotal(x),0),ex=validExpenses.reduce((a,x)=>a+Number(x.amount||0),0);
+ $("weekSales").textContent=money(st);$("weekExpenses").textContent=money(ex);$("weekCash").textContent=money(st-ex);$("weekCount").textContent=validSales.length;
+ $("weekDaily").innerHTML=days.map(d=>{let k=localDateKey(d),ds=validSales.filter(x=>saleDateKey(x)===k),de=validExpenses.filter(x=>String(x.date||"")===k),a=ds.reduce((n,x)=>n+saleTotal(x),0),b=de.reduce((n,x)=>n+Number(x.amount||0),0);return `<div class="item"><div class="itemhead"><strong>${d.toLocaleDateString("fr-FR",{weekday:"long",day:"2-digit",month:"2-digit"})}</strong><strong>${money(a-b)}</strong></div><div class="muted">Ventes : ${money(a)} • Dépenses : ${money(b)} • ${ds.length} vente(s)</div></div>`}).join("");
+}
+function renderDashboard(){let list=visibleSales().filter(s=>!s.cancelled),today=list.filter(s=>(s.date||"").slice(0,10)===dateKey()),totalSales=list.reduce((a,s)=>a+saleTotal(s),0),spent=totalExpenses();$("statToday").textContent=money(today.reduce((a,s)=>a+saleTotal(s),0));$("statTotalSales").textContent=money(totalSales);$("statCash").textContent=money(list.reduce((a,s)=>a+Number(s.paid||0),0));$("statCount").textContent=list.length;$("statProducts").textContent=products.length;if($("statExpenses"))$("statExpenses").textContent=money(spent);if($("statCaisse"))$("statCaisse").textContent=money(totalSales-spent);$("recentSales").innerHTML=list.slice().reverse().slice(0,5).map(s=>`<div class="item"><div class="itemhead"><strong>${esc(s.invoiceNo||"Facture")}</strong><strong>${money(saleTotal(s))}</strong></div><div class="muted">${esc(s.clientName||"Client de passage")} • ${esc(statusOf(s))}</div></div>`).join("")||'<p class="muted">Aucune vente.</p>'}
+function saveProduct(){if(!isAdmin()){notify("Admin ihany no afaka mitantana ny produits sy ny prix");return}let name=$("pName").value.trim(),price=Number($("pPrice").value);if(!name||$("pPrice").value===""||price<0){notify("Ampidiro ny anarana sy ny prix");return}if(editingProductId&&!isAdmin()){notify("Admin ihany no afaka manova prix");return}let has=$("pHasStock").value==="yes",stock=has?Math.max(0,Number($("pStock").value)||0):0;if(editingProductId){let p=products.find(x=>String(x.id)===String(editingProductId));if(!p)return;Object.assign(p,{name,category:$("pCategory").value.trim(),sell:price,hasStock:has,stock})}else products.push({id:Date.now(),name,category:$("pCategory").value.trim(),sell:price,hasStock:has,stock});write("madaProducts",products);cancelProductEdit();renderProducts();renderSaleProducts();renderDashboard();notify("Produit enregistré")}
+function editProduct(id){if(!isAdmin()){notify("Admin ihany no afaka manova prix");return}let p=products.find(x=>String(x.id)===String(id));if(!p)return;editingProductId=id;$("pName").value=p.name||"";$("pCategory").value=p.category||"";$("pPrice").value=p.sell??p.price??0;$("pHasStock").value=p.hasStock===false?"no":"yes";$("pStock").value=p.stock??0;$("stockField").classList.toggle("hidden",p.hasStock===false);$("productTitle").textContent="Modifier le produit";$("saveProductBtn").textContent="Enregistrer les modifications";$("cancelProductBtn").classList.remove("hidden");window.scrollTo(0,0)}
+function cancelProductEdit(){editingProductId=null;["pName","pCategory","pPrice","pStock"].forEach(id=>$(id).value="");$("pHasStock").value="yes";$("stockField").classList.remove("hidden");$("productTitle").textContent="Ajouter un produit";$("saveProductBtn").textContent="Enregistrer le produit";$("cancelProductBtn").classList.add("hidden")}
+function deleteProduct(id){if(!isAdmin()){notify("Action réservée à Admin");return}if(!confirm("Supprimer ce produit ?"))return;products=products.filter(p=>String(p.id)!==String(id));write("madaProducts",products);renderProducts();renderSaleProducts();renderDashboard()}
+function renderProducts(){$("productTitle").parentElement.classList.toggle("hidden",!isAdmin());let q=$("productSearch").value.toLowerCase();let a=products.filter(p=>(p.name||"").toLowerCase().includes(q)||(p.category||"").toLowerCase().includes(q));$("productList").innerHTML=a.map(p=>`<div class="item"><div class="itemhead"><strong>${esc(p.name)}</strong><strong>${money(p.sell??p.price)}</strong></div><div class="muted">${esc(p.category||"Sans catégorie")} • ${p.hasStock===false?"Sans stock":"Stock : "+(p.stock??0)}</div>${isAdmin()?`<div class="actions"><button class="btn2" onclick="editProduct('${p.id}')">Modifier</button><button class="btnred" onclick="deleteProduct('${p.id}')">Supprimer</button></div>`:""}</div>`).join("")||'<p class="muted">Aucun produit.</p>'}
+function formatMgPhone(value){let d=String(value||"").replace(/\D/g,"");if(!d)return "—";if(d.startsWith("00261"))d=d.slice(2);if(d.startsWith("0"))d="261"+d.slice(1);else if(!d.startsWith("261"))d="261"+d;let local=d.slice(3);if(local.length===9)local=local.replace(/(\d{2})(\d{2})(\d{3})(\d{2})/,"$1 $2 $3 $4");return "+"+d.slice(0,3)+(local?" "+local:"")}
+function addClient(){let name=$("cName").value.trim();if(!name){notify("Ampidiro ny anaran'ny client");return}clients.push({id:Date.now(),name,phone:$("cPhone").value.trim(),address:$("cAddress").value.trim()});write("madaClients",clients);["cName","cPhone","cAddress"].forEach(x=>$(x).value="");renderClients();renderClientSelect();notify("Client enregistré")}
+function updateClientContact(id){let c=clients.find(x=>String(x.id)===String(id));if(!c)return;let phone=prompt("Nouveau téléphone du client",c.phone||"");if(phone===null)return;let address=prompt("Nouvelle adresse du client",c.address||"");if(address===null)return;c.phone=phone.trim();c.address=address.trim();write("madaClients",clients);renderClients();renderClientSelect();notify("Coordonnées client mises à jour (nom inchangé)")}
+function renderClients(){let q=$("clientSearch").value.toLowerCase();$("clientList").innerHTML=clients.filter(c=>(c.name+" "+(c.phone||"")).toLowerCase().includes(q)).map(c=>`<div class="item"><strong>${esc(c.name)}</strong><div class="muted">${esc(c.phone)} • ${esc(c.address)}</div>${!isAdmin()?`<div class="actions"><button class="btn2" onclick="updateClientContact('${c.id}')">Mettre à jour coordonnées</button></div>`:""}</div>`).join("")||'<p class="muted">Aucun client.</p>'}
+function renderClientSelect(){$("saleClient").innerHTML='<option value="">Client de passage</option>'+clients.map(c=>`<option value="${c.id}">${esc(c.name)} - ${esc(c.phone)}</option>`).join("")}
+function renderSaleProducts(){$("saleProduct").innerHTML='<option value="">Choisir un produit</option>'+products.map(p=>`<option value="${p.id}">${esc(p.name)} — ${money(p.sell??p.price)}</option>`).join("")}
+function fillSalePrice(){let p=products.find(x=>String(x.id)===$("saleProduct").value);$("salePrice").value=p?(p.sell??p.price??0):"";$("salePrice").readOnly=!!p&&!isAdmin();}
+function addCartItem(){let p=products.find(x=>String(x.id)===$("saleProduct").value),qty=Math.floor(Number($("saleQty").value)),price=Number($("salePrice").value);if(!p||qty<1||$("salePrice").value===""||price<0){notify("Zahao ny produit, quantité ary prix");return}if(!isAdmin()&&price!==Number(p.sell??p.price??0)){notify("Le vendeur ne peut pas modifier le prix");return}let old=cart.find(x=>String(x.productId)===String(p.id)),oldQty=old?old.qty:0;if(p.hasStock!==false&&oldQty+qty>Number(p.stock||0)){notify("Stock insuffisant");return}if(old){old.qty+=qty;old.price=price;old.subtotal=old.qty*price}else cart.push({productId:p.id,productName:p.name,qty,price,subtotal:qty*price});$("saleQty").value=1;renderCart();notify("Article ajouté")}
+function removeCartItem(id){cart=cart.filter(x=>String(x.productId)!==String(id));renderCart()}
+function subtotal(){return cart.reduce((a,x)=>a+x.qty*x.price,0)}
+function fee(){return $("reception").value==="Livraison"?Math.max(0,Number($("deliveryFee").value)||0):0}
+function renderCart(){$("cartList").innerHTML=cart.map(x=>`<div class="item"><div class="itemhead"><strong>${esc(x.productName)} × ${x.qty}</strong><button class="btnred small" onclick="removeCartItem('${x.productId}')">Retirer</button></div><div class="muted">${money(x.price)} / unité • ${money(x.subtotal)}</div></div>`).join("")||'<p class="muted">Aucun article ajouté.</p>';$("subtotal").textContent=money(subtotal());$("grandTotal").textContent=money(subtotal()+fee())}
+function nextInvoiceNumber(){const now=new Date(),months=["JAN","FEV","MAR","AVR","MAI","JUN","JUL","AOU","SEP","OCT","NOV","DEC"],alphabet="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let code="";if(window.crypto&&crypto.getRandomValues){let a=new Uint8Array(7);crypto.getRandomValues(a);for(let n of a)code+=alphabet[n%alphabet.length]}else{for(let i=0;i<7;i++)code+=alphabet[Math.floor(Math.random()*alphabet.length)]}let candidate=`MS-${months[now.getMonth()]}-${String(now.getFullYear()).slice(-2)}-${code}`;while(sales.some(x=>x.invoiceNo===candidate)){code="";for(let i=0;i<7;i++)code+=alphabet[Math.floor(Math.random()*alphabet.length)];candidate=`MS-${months[now.getMonth()]}-${String(now.getFullYear()).slice(-2)}-${code}`}return candidate}
+function saveSale(){if(!currentUser){notify("Mila miditra aloha");return}if(!cart.length){notify("Ampidiro aloha ny article");return}for(let x of cart){let p=products.find(p=>String(p.id)===String(x.productId));if(p&&p.hasStock!==false&&Number(p.stock||0)<x.qty){notify("Stock insuffisant pour "+p.name);return}}let total=subtotal()+fee(),paid=Math.max(0,Number($("paid").value)||0);if(paid>total){notify("Le montant reçu dépasse le total");return}let c=clients.find(x=>String(x.id)===$("saleClient").value);let sale={id:Date.now(),invoiceNo:nextInvoiceNumber(),date:new Date().toISOString(),clientId:c?.id||"",clientName:c?.name||"Client de passage",clientPhone:c?.phone||"",clientAddress:c?.address||"",items:cart.map(x=>({...x})),subtotal:subtotal(),delivery:$("reception").value,deliveryFee:fee(),total,paid,payment:$("payment").value,status:$("saleStatus").value,sellerUsername:currentUser.username,sellerName:currentUser.name,sellerPhone:currentUser.phone||settings.phone||"",sellerEmail:currentUser.email||"",cancelled:false};if(sale.status==="Payé"||sale.status==="Payé livré")sale.paid=total;if(sale.status==="Non payé")sale.paid=0;if(sale.status==="Acompte payé"&&sale.paid<=0){notify("Ampidiro ny acompte voaray");return}sales.push(sale);for(let x of cart){let p=products.find(p=>String(p.id)===String(x.productId));if(p&&p.hasStock!==false){p.stock=Number(p.stock||0)-x.qty}}write("madaSales",sales);write("madaProducts",products);cart=[];$("paid").value=0;$("saleStatus").value="Non payé";$("saleClient").value="";$("saleProduct").value="";$("salePrice").value="";$("reception").value="Récupération";$("deliveryFee").value=0;$("deliveryBox").classList.add("hidden");renderCart();refreshAll();openInvoice(sale.id);notify("Commande enregistrée")}
+function renderHistory(){let q=$("historySearch").value.toLowerCase(),a=visibleSales().filter(s=>(s.invoiceNo+" "+s.clientName+" "+getItems(s).map(x=>x.productName).join(" ")).toLowerCase().includes(q));$("historyList").innerHTML=a.slice().reverse().map(s=>`<div class="item"><div class="itemhead"><strong>${esc(s.invoiceNo)}</strong><strong>${money(saleTotal(s))}</strong></div><div class="muted">${esc(s.clientName)} • ${new Date(s.date).toLocaleString("fr-FR")}<br>${esc(statusOf(s))}${s.cancelled?" • ANNULÉE":""} • ${esc(s.sellerName||"")}</div><div class="actions"><button class="btn2" onclick="openInvoice('${s.id}')">Voir facture</button>${isAdmin()?`<button class="btn2" onclick="editSale('${s.id}')">Modifier facture</button><button class="btn2" onclick="editSaleStatus('${s.id}')">Modifier statut</button>${s.cancelled?"":`<button class="btnred" onclick="cancelSale('${s.id}')">Annuler</button>`}<button class="btnred" onclick="deleteSale('${s.id}')">Supprimer</button>`:""}</div></div>`).join("")||'<p class="muted">Aucune facture.</p>'}
+function editSale(id){if(!isAdmin()){notify("Modification réservée à Admin");return}let s=sales.find(x=>String(x.id)===String(id));if(!s)return;let name=prompt("Nom du client",s.clientName||"");if(name===null)return;let phone=prompt("Téléphone du client",s.clientPhone||"");if(phone===null)return;let address=prompt("Adresse du client",s.clientAddress||"");if(address===null)return;let itemText=JSON.stringify(getItems(s).map(x=>({productId:x.productId||"",productName:x.productName,qty:x.qty,price:x.price})),null,2);let edited=prompt("Articles de la facture (JSON). Admin uniquement : modifiez quantité/prix si nécessaire.",itemText);if(edited===null)return;let items;try{items=JSON.parse(edited);if(!Array.isArray(items)||!items.length||items.some(x=>!x.productName||!(Number(x.qty)>0)||!(Number(x.price)>=0)))throw Error()}catch(e){notify("Liste des articles invalide. Facture non modifiée.");return}let feeValue=prompt("Frais de livraison (Ar)",s.deliveryFee||0);if(feeValue===null)return;let deliveryFee=Math.max(0,Number(feeValue)||0);let paidValue=prompt("Montant payé (Ar)",s.paid||0);if(paidValue===null)return;let paid=Math.max(0,Number(paidValue)||0);let newItems=items.map(x=>({...x,qty:Number(x.qty),price:Number(x.price),subtotal:Number(x.qty)*Number(x.price)})),newSubtotal=newItems.reduce((a,x)=>a+x.subtotal,0),newTotal=newSubtotal+deliveryFee;if(paid>newTotal){notify("Le montant payé dépasse le nouveau total");return}if(!s.cancelled){for(let old of getItems(s)){let p=products.find(p=>String(p.id)===String(old.productId));if(p&&p.hasStock!==false)p.stock=Number(p.stock||0)+Number(old.qty||0)}for(let x of newItems){let p=products.find(p=>String(p.id)===String(x.productId));if(p&&p.hasStock!==false){if(Number(p.stock||0)<x.qty){notify("Stock insuffisant pour "+p.name+". Vérifiez le stock avant de modifier.");return}p.stock=Number(p.stock||0)-x.qty}}}s.clientName=name.trim();s.clientPhone=phone.trim();s.clientAddress=address.trim();s.items=newItems;s.subtotal=newSubtotal;s.deliveryFee=deliveryFee;s.total=newTotal;s.paid=paid;write("madaSales",sales);write("madaProducts",products);renderHistory();renderDashboard();renderProducts();if(invoiceCurrent&&String(invoiceCurrent.id)===String(s.id))openInvoice(s.id);notify("Facture modifiée par Admin")}
+function deleteSale(id){if(!isAdmin()){notify("Suppression réservée à Admin");return}let s=sales.find(x=>String(x.id)===String(id));if(!s||!confirm("Supprimer définitivement cette facture ?"))return;if(!s.cancelled){for(let x of getItems(s)){let p=products.find(p=>String(p.id)===String(x.productId));if(p&&p.hasStock!==false)p.stock=Number(p.stock||0)+Number(x.qty||0)}}sales=sales.filter(x=>String(x.id)!==String(id));write("madaSales",sales);write("madaProducts",products);if(invoiceCurrent&&String(invoiceCurrent.id)===String(id)){$("invoiceModal").classList.remove("show");invoiceCurrent=null}renderHistory();renderDashboard();renderProducts();notify("Facture supprimée")}
+function editSaleStatus(id){if(!isAdmin())return;let s=sales.find(x=>String(x.id)===String(id));if(!s)return;let next=prompt("Nouveau statut : Non payé / Acompte payé / Payé / Payé livré",statusOf(s));if(!next)return;if(!["Non payé","Acompte payé","Payé","Payé livré"].includes(next)){notify("Statut invalide");return}s.status=next;if(next==="Non payé")s.paid=0;if(next==="Payé"||next==="Payé livré")s.paid=saleTotal(s);if(next==="Acompte payé"){let n=Number(prompt("Montant déjà reçu (Ar)",s.paid||0));if(!Number.isFinite(n)||n<0||n>=saleTotal(s)){notify("Montant d'acompte invalide");return}s.paid=n}write("madaSales",sales);renderHistory();renderDashboard()}
+function cancelSale(id){if(!isAdmin()){notify("Action réservée à Admin");return}let s=sales.find(x=>String(x.id)===String(id));if(!s||s.cancelled)return;if(!confirm("Annuler cette facture ? Le stock sera remis."))return;s.cancelled=true;for(let x of getItems(s)){let p=products.find(p=>String(p.id)===String(x.productId));if(p&&p.hasStock!==false)p.stock=Number(p.stock||0)+Number(x.qty||0)}write("madaSales",sales);write("madaProducts",products);renderHistory();renderDashboard();renderProducts();notify("Facture annulée")}
+function amountInWords(n){
+ const units=["zéro","un","deux","trois","quatre","cinq","six","sept","huit","neuf","dix","onze","douze","treize","quatorze","quinze","seize","dix-sept","dix-huit","dix-neuf"];
+ function under100(x){if(x<20)return units[x];if(x<70){let t=Math.floor(x/10),u=x%10;let tens=["","","vingt","trente","quarante","cinquante","soixante"][t];return tens+(u===0?"":u===1?" et un":"-"+units[u])}if(x<80)return "soixante-"+under100(x-60);return "quatre-vingt"+(x===80?"":"-"+under100(x-80))}
+ function under1000(x){if(x<100)return under100(x);let h=Math.floor(x/100),r=x%100;return (h===1?"cent":units[h]+" cent")+(r===0?(h>1?"s":""):" "+under100(r))}
+ function integerWords(x){if(x===0)return "zéro";let parts=[];let millions=Math.floor(x/1000000);x%=1000000;let thousands=Math.floor(x/1000);x%=1000;if(millions)parts.push((millions===1?"un":under1000(millions))+" million"+(millions>1?"s":""));if(thousands)parts.push((thousands===1?"":under1000(thousands)+" ")+"mille");if(x)parts.push(under1000(x));return parts.join(" ")}
+ let value=Math.max(0,Math.floor(Number(n)||0));return integerWords(value)+" ariary";
+}
+function invoiceHtml(s){
+ let rows=getItems(s).map(x=>`<tr><td>${esc(x.productName)}</td><td>${x.qty}</td><td class="right">${money(x.price)}</td><td class="right">${money(x.subtotal??x.qty*x.price)}</td></tr>`).join("");
+ let sellerPhone=formatMgPhone(s.sellerPhone||"");
+ let clientPhone=formatMgPhone(s.clientPhone||"");
+ let total=saleTotal(s);
+ let client=clients.find(c=>String(c.id)===String(s.clientId));
+ let deliveryAddress=s.clientAddress||client?.address||"";
+ let clientBlock=`<div class="inv-panel"><div class="inv-label">CLIENT</div><strong>${esc(s.clientName||"Client de passage")}</strong><br>Contact : ${esc(clientPhone)}`+(s.delivery==="Livraison"?`<br><strong>Lieu de livraison :</strong> ${esc(deliveryAddress||"Adresse client non renseignée")}`:"")+`</div>`;
+ let sellerBlock=`<div class="inv-panel"><div class="inv-label">VENDEUR</div><strong>${esc(s.sellerName||"")}</strong><br>Tél. : ${esc(sellerPhone)}<br>E-mail : ${esc(s.sellerEmail||"—")}</div>`;
+ let invoiceDate=new Date(s.date);let monthsShort=["Jan.","Fév.","Mar.","Avr.","Mai","Juin","Juil.","Août","Sept.","Oct.","Nov.","Déc."];let dateText=String(invoiceDate.getDate()).padStart(2,"0")+" "+monthsShort[invoiceDate.getMonth()]+" "+invoiceDate.getFullYear();let timeText=new Intl.DateTimeFormat("fr-FR",{hour:"2-digit",minute:"2-digit",hour12:false}).format(invoiceDate);
+ return `<div class="inv-top"><div><div class="inv-brand">${esc(settings.shopName||"MADA SHOP")}</div><div style="font-size:11px;color:#747e78;margin-top:4px">${esc(settings.address||"")}</div><div style="font-size:11px;color:#747e78">${esc(formatMgPhone(settings.phone||""))}</div></div><div class="inv-meta"><div class="inv-label">FACTURE</div><div class="inv-no">${esc(s.invoiceNo)}</div><div style="font-size:10px;font-weight:600;color:#747e78;margin-top:3px">${esc(dateText)}</div><div style="font-size:10px;color:#747e78;margin-top:1px">${esc(timeText)}</div></div></div>
+ <div class="inv-details">${sellerBlock}${clientBlock}</div>
+ <table><thead><tr><th>Produit</th><th>Qté</th><th class="right">Prix unitaire</th><th class="right">Total</th></tr></thead><tbody>${rows}</tbody></table>
+ <div class="inv-totals"><p><span>Sous-total</span><strong>${money(s.subtotal??getItems(s).reduce((a,x)=>a+Number(x.subtotal||0),0))}</strong></p><p><span>Livraison</span><strong>${money(s.deliveryFee||0)}</strong></p><p class="inv-grand"><span>TOTAL À PAYER</span><span>${money(total)}</span></p><p><span>Payé</span><strong>${money(s.paid||0)}</strong></p><p><span>Reste à payer</span><strong>${money(Math.max(0,total-Number(s.paid||0)))}</strong></p><p><span>Statut</span><strong>${esc(statusOf(s))}</strong></p></div>
+ <div class="inv-words"><div style="font-size:10px;color:#4b5750;margin-bottom:4px">Arrêtée la présente facture à la somme de :</div><strong>${esc(amountInWords(total))}</strong></div>
+ <div class="inv-footer">Votre style, notre mission<br><span style="font-size:10px;font-weight:400;color:#747e78">Merci pour votre confiance !</span></div>`;
+}
+function openInvoice(id){let s=sales.find(x=>String(x.id)===String(id));if(!s)return;invoiceCurrent=s;$("invoicePaper").innerHTML=invoiceHtml(s);$("invoiceModal").classList.add("show")}
+function shareInvoice(kind){if(!invoiceCurrent)return;let s=invoiceCurrent,txt=`Facture ${s.invoiceNo} - ${settings.shopName||"MADA SHOP"}\nClient: ${s.clientName}\nTotal: ${money(saleTotal(s))}\nPayé: ${money(s.paid||0)}\nStatut: ${statusOf(s)}\n\nVeuillez trouver votre facture. Le PDF peut être joint après son enregistrement.`;let url=kind==="wa"?"https://wa.me/"+formatMgPhone(s.clientPhone||"").replace(/\D/g,"")+"?text="+encodeURIComponent(txt):"mailto:?subject="+encodeURIComponent("Facture "+s.invoiceNo)+"&body="+encodeURIComponent(txt);window.open(url,"_blank")}
+function loadSettingsForm(){$("shopName").value=settings.shopName||"MADA SHOP";$("shopPhone").value=settings.phone||"";$("shopAddress").value=settings.address||""}
+function saveSettings(){settings={shopName:$("shopName").value.trim()||"MADA SHOP",phone:$("shopPhone").value.trim(),address:$("shopAddress").value.trim()};write("madaSettings",settings);$("headerShopName").textContent=settings.shopName;notify("Paramètres enregistrés")}
+function saveExpense(){if(!isAdmin()){notify("Action réservée à Admin");return}let name=$("expenseName").value.trim(),amount=Number($("expenseAmount").value),date=$("expenseDate").value;if(!name||$("expenseAmount").value===""||!Number.isFinite(amount)||amount<0||!date){notify("Remplissez la désignation, le montant et la date");return}expenses.push({id:Date.now(),type:$("expenseType").value,name,amount,date,createdAt:new Date().toISOString(),createdBy:currentUser.username});write("madaExpenses",expenses);$("expenseName").value="";$("expenseAmount").value="";renderExpenses();renderDashboard();renderWeeklyReport();notify("Dépense enregistrée")}
+function deleteExpense(id){if(!isAdmin()||!confirm("Supprimer cette dépense ?"))return;expenses=expenses.filter(e=>String(e.id)!==String(id));write("madaExpenses",expenses);renderExpenses();renderDashboard();notify("Dépense supprimée")}
+function renderExpenses(){if(!isAdmin())return;let total=totalExpenses();$("expensesTotal").textContent=money(total);$("expenseList").innerHTML=expenses.slice().reverse().map(e=>`<div class="item"><div class="itemhead"><strong>${esc(e.type)} — ${esc(e.name)}</strong><strong>${money(e.amount)}</strong></div><div class="muted">${esc(e.date||"")} </div><div class="actions"><button class="btnred small" onclick="deleteExpense('${e.id}')">Supprimer</button></div></div>`).join("")||'<p class="muted">Aucune dépense enregistrée.</p>'}
+function addVendor(){if(!isAdmin()){notify("Admin ihany no afaka mamorona compte vendeur");return}let name=$("vName").value.trim(),username=$("vUsername").value.trim();if(!name||!username){notify("Ampidiro ny anarana sy identifiant");return}if(username.toLowerCase()==="admin"||vendors.some(v=>v.username.toLowerCase()===username.toLowerCase())){notify("Identifiant déjà utilisé");return}let accessCode;do{accessCode=String(Math.floor(100000+Math.random()*900000))}while(vendors.some(v=>v.accessCode===accessCode));vendors.push({id:Date.now(),name,phone:$("vPhone").value.trim(),email:$("vEmail").value.trim(),username,accessCode,active:true});write("madaVendors",vendors);$("vName").value=$("vPhone").value=$("vEmail").value=$("vUsername").value="";$("generatedCode").textContent=accessCode;$("newVendorCode").classList.remove("hidden");renderVendors();notify("Compte vendeur créé. Communiquez-lui son code.")}
+function renderVendors(){if(!isAdmin()){$("vendorList").innerHTML="";return}$("vendorList").innerHTML=vendors.map(v=>`<div class="item"><div class="itemhead"><strong>${esc(v.name)}</strong><span class="badge">${v.active===false?"Désactivé":"Actif"}</span></div><div class="muted">Identifiant : ${esc(v.username)} • Tél. : ${esc(v.phone||"—")} • E-mail : ${esc(v.email||"—")}</div><div style="margin-top:7px;font-weight:700;color:#075b3d">Code : ${esc(v.accessCode||"Ancien compte — ancien mot de passe")}</div><div class="actions">${v.accessCode?`<button class="btn2" onclick="copyVendorCode('${v.id}')">Copier le code</button>`:""}<button class="btn2" onclick="toggleVendor('${v.id}')">${v.active===false?"Activer":"Désactiver"}</button><button class="btnred" onclick="deleteVendor('${v.id}')">Supprimer</button></div></div>`).join("")||'<p class="muted">Aucun vendeur.</p>'}
+function copyVendorCode(id){if(!isAdmin())return;let v=vendors.find(x=>String(x.id)===String(id));if(!v||!v.accessCode)return;let fallback=()=>{let t=document.createElement("textarea");t.value=v.accessCode;document.body.appendChild(t);t.select();document.execCommand("copy");t.remove();notify("Code copié")};if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(v.accessCode).then(()=>notify("Code copié")).catch(fallback);else fallback()}
+function toggleVendor(id){if(!isAdmin())return;let v=vendors.find(x=>String(x.id)===String(id));if(v){v.active=v.active===false;write("madaVendors",vendors);renderVendors()}}
+function deleteVendor(id){if(!isAdmin()||!confirm("Supprimer ce compte vendeur ?"))return;vendors=vendors.filter(x=>String(x.id)!==String(id));write("madaVendors",vendors);renderVendors()}
+function changePassword(){if($("oldPassword").value!==adminPassword){notify("Ancien mot de passe incorrect");return}let p=$("newPassword").value;if(p.length<4){notify("Le nouveau mot de passe doit contenir au moins 4 caractères");return}adminPassword=p;localStorage.setItem("madaAdminPassword",p);$("oldPassword").value=$("newPassword").value="";notify("Mot de passe modifié")}
+function backup(){let data={products,sales,clients,vendors,expenses,settings,adminPassword,invoiceCounter:read("madaInvoiceCounter",{year:new Date().getFullYear(),count:0})};let blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="mada-shop-sauvegarde.json";a.click();URL.revokeObjectURL(a.href)}
+function restore(file){let r=new FileReader();r.onload=()=>{try{let d=JSON.parse(r.result);if(!d||!Array.isArray(d.products)||!Array.isArray(d.sales))throw Error();products=d.products; sales=d.sales;clients=Array.isArray(d.clients)?d.clients:[];vendors=Array.isArray(d.vendors)?d.vendors:[];expenses=Array.isArray(d.expenses)?d.expenses:[];settings=d.settings||{shopName:"MADA SHOP",phone:"",address:""};write("madaProducts",products);write("madaSales",sales);write("madaClients",clients);write("madaVendors",vendors);write("madaExpenses",expenses);write("madaSettings",settings);if(d.adminPassword){adminPassword=d.adminPassword;setPw(adminPassword)}if(d.invoiceCounter)write("madaInvoiceCounter",d.invoiceCounter);refreshAll();notify("Sauvegarde restaurée")}catch(e){notify("Fichier de sauvegarde invalide")}};r.readAsText(file)}
+$("loginBtn").addEventListener("click",login);$("loginRole").addEventListener("change",updateLoginRole);$("loginPass").addEventListener("keydown",e=>{if(e.key==="Enter")login()});$("logoutBtn").addEventListener("click",logout);
+$("navigation").addEventListener("click",e=>{let b=e.target.closest("button[data-page]");if(b)showPage(b.dataset.page)});
+$("saveProductBtn").addEventListener("click",saveProduct);$("cancelProductBtn").addEventListener("click",cancelProductEdit);$("pHasStock").addEventListener("change",()=>$("stockField").classList.toggle("hidden",$("pHasStock").value==="no"));$("productSearch").addEventListener("input",renderProducts);
+$("addClientBtn").addEventListener("click",addClient);$("clientSearch").addEventListener("input",renderClients);$("saleProduct").addEventListener("change",fillSalePrice);$("addCartBtn").addEventListener("click",addCartItem);$("reception").addEventListener("change",()=>{$("deliveryBox").classList.toggle("hidden",$("reception").value!=="Livraison");renderCart()});$("deliveryFee").addEventListener("input",renderCart);$("saveSaleBtn").addEventListener("click",saveSale);$("historySearch").addEventListener("input",renderHistory);
+$("saveExpenseBtn").addEventListener("click",saveExpense);$("expenseDate").value=localDateKey(new Date());$("reportWeekDate").value=localDateKey(new Date());$("reportWeekDate").addEventListener("change",renderWeeklyReport);$("exportWeeklyPdf").addEventListener("click",()=>{renderWeeklyReport();window.print()});$("addVendorBtn").addEventListener("click",addVendor);$("copyGeneratedCode").addEventListener("click",()=>{let code=$("generatedCode").textContent;if(!code)return;let fallback=()=>{let t=document.createElement("textarea");t.value=code;document.body.appendChild(t);t.select();document.execCommand("copy");t.remove();notify("Code copié")};if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(code).then(()=>notify("Code copié")).catch(fallback);else fallback()});$("saveSettingsBtn").addEventListener("click",saveSettings);$("changePasswordBtn").addEventListener("click",changePassword);$("backupBtn").addEventListener("click",backup);$("restoreBtn").addEventListener("click",()=>$("restoreFile").click());$("restoreFile").addEventListener("change",e=>{if(e.target.files[0])restore(e.target.files[0]);e.target.value=""});
+$("closeInvoiceBtn").addEventListener("click",()=>$("invoiceModal").classList.remove("show"));$("shareWaBtn").addEventListener("click",()=>shareInvoice("wa"));$("shareMailBtn").addEventListener("click",()=>shareInvoice("mail"));$("printInvoiceBtn").addEventListener("click",()=>window.print());
+loadAll();$("headerShopName").textContent=settings.shopName||"MADA SHOP";
+/* ====== SYNCHRONISATION EN LIGNE (Firebase Firestore) ====== */
+var cloudDb=null,cloudOn=false;
+const CLOUD_KEYS=["madaProducts","madaSales","madaClients","madaVendors","madaExpenses","madaSettings","madaInvoiceCounter","madaAdminPassword"];
+function cloudBadge(t,c){let b=document.getElementById("cloudBadge");if(!b){b=document.createElement("div");b.id="cloudBadge";b.style.cssText="position:fixed;left:8px;bottom:8px;z-index:9999;font:12px Arial;padding:4px 10px;border-radius:12px;color:#fff;opacity:.9;pointer-events:none";document.body.appendChild(b)}b.textContent=t;b.style.background=c}
+function cloudPush(k,json){if(!cloudDb)return;cloudDb.collection("mada").doc(k).set({data:json,t:Date.now()}).catch(e=>{console.error(e);cloudBadge("⚠ Erreur de synchronisation","#c73535")})}
+function cloudApply(){const keep=document.activeElement;if(keep&&/^(INPUT|SELECT|TEXTAREA)$/.test(keep.tagName)&&currentUser){clearTimeout(cloudApply.t);cloudApply.t=setTimeout(cloudApply,2500);return}loadAll();$("headerShopName").textContent=settings.shopName||"MADA SHOP";if(currentUser){if(!isAdmin()&&currentUser.username&&!vendors.some(v=>v.username===currentUser.username&&v.active!==false)){location.reload();return}refreshAll()}}
+function cloudStart(){
+ if(!FIREBASE_CONFIG.apiKey||FIREBASE_CONFIG.apiKey==="COLLEZ_ICI"||typeof firebase==="undefined"){cloudBadge("Mode local (non synchronisé)","#718078");return}
+ try{firebase.initializeApp(FIREBASE_CONFIG);cloudDb=firebase.firestore();cloudDb.enablePersistence({synchronizeTabs:true}).catch(()=>{})}catch(e){console.error(e);cloudBadge("⚠ Configuration Firebase invalide","#c73535");cloudDb=null;return}
+ cloudBadge("Synchronisation…","#2563eb");
+ let first=true;
+ cloudDb.collection("mada").onSnapshot(snap=>{
+  let changed=false;const seen=new Set();
+  snap.docChanges().forEach(ch=>{
+   const k=ch.doc.id;seen.add(k);if(!CLOUD_KEYS.includes(k)||ch.type==="removed")return;
+   const d=ch.doc.data();if(ch.doc.metadata.hasPendingWrites)return;
+   try{const incoming=d.data;if(localStorage.getItem(k)!==incoming){localStorage.setItem(k,incoming);changed=true}}catch(e){}
+  });
+  if(first){first=false;
+   CLOUD_KEYS.forEach(k=>{if(!seen.has(k)){const v=localStorage.getItem(k);if(v!==null)cloudPush(k,v)}});
+  }
+  cloudOn=!snap.metadata.fromCache;
+  cloudBadge(cloudOn?"☁ En ligne • synchronisé":"Hors ligne (sera synchronisé)",cloudOn?"#087b50":"#b7791f");
+  if(changed)cloudApply();
+ },err=>{console.error(err);cloudBadge("⚠ Accès refusé / erreur Firebase","#c73535")});
+}
+cloudStart();
+
+</script>
+</body>
+</html>
