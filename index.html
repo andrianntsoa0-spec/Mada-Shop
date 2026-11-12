@@ -87,11 +87,11 @@ header .logout{margin-left:auto;padding:9px 11px;background:#edf3ef;color:#36534
 @media(min-width:650px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}.container{padding:20px 18px}.stat{padding:16px}.nav{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:380px){.nav{gap:6px;padding:8px}.nav button{font-size:10px;min-height:70px}}
 @media print{
- @page{size:A5 portrait;margin:8mm}
- body *{visibility:hidden!important}
- #invoiceModal,#invoiceModal *{visibility:visible!important}
- #invoiceModal{display:block!important;position:absolute!important;inset:0!important;padding:0!important;background:white!important;overflow:visible!important}
- .modal-actions{display:none!important}.modal-box{max-width:none!important;padding:0!important;border-radius:0!important}
+ body.print-invoice #app,body.print-invoice #loginScreen,body.print-invoice #toast,body.print-invoice #cloudBadge{display:none!important}
+ body.print-invoice{background:#fff!important}
+ body.print-invoice #invoiceModal{display:block!important;position:static!important;inset:auto!important;padding:0!important;background:#fff!important;overflow:visible!important;height:auto!important}
+ body.print-invoice .modal-actions{display:none!important}
+ body.print-invoice .modal-box{max-width:none!important;padding:0!important;border-radius:0!important;margin:0!important}
 }
 
 
@@ -99,17 +99,17 @@ header .logout{margin-left:auto;padding:9px 11px;background:#edf3ef;color:#36534
 .report-heading h3{margin-bottom:0}
 #exportWeeklyPdf{font-size:12px;padding:10px 13px}
 @media print{
- @page{size:A4 portrait;margin:12mm}
- body *{visibility:hidden!important}
- #weeklyReport,#weeklyReport *{visibility:visible!important}
- #weeklyReport{display:block!important;position:absolute!important;left:0!important;top:0!important;width:100%!important;margin:0!important;padding:0!important;background:#fff!important}
- #weeklyReport .card{box-shadow:none!important;border:1px solid #ddd!important;break-inside:avoid;margin:0 0 12px!important}
- #weeklyReport .print-hide{display:none!important}
- #weeklyReport .grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
- #weeklyReport .stat{break-inside:avoid;border:1px solid #ddd!important}
- #weeklyReport .item{break-inside:avoid}
- #invoiceModal,#invoiceModal *{visibility:hidden!important;display:none!important}
- header,.nav,#toast,.modal,.page:not(#weeklyReport){display:none!important}
+ body.print-report #weeklyReport,body.print-report #weeklyReport *{visibility:visible!important}
+ body.print-report *{visibility:hidden!important}
+ body.print-report #weeklyReport,body.print-report #weeklyReport *{visibility:visible!important}
+ body.print-report #weeklyReport{display:block!important;position:absolute!important;left:0!important;top:0!important;width:100%!important;margin:0!important;padding:0!important;background:#fff!important}
+ body.print-report #weeklyReport .card{box-shadow:none!important;border:1px solid #ddd!important;break-inside:avoid;margin:0 0 12px!important}
+ body.print-report #weeklyReport .print-hide{display:none!important}
+ body.print-report #weeklyReport .grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+ body.print-report #weeklyReport .stat{break-inside:avoid;border:1px solid #ddd!important}
+ body.print-report #weeklyReport .item{break-inside:avoid}
+ body.print-report header,body.print-report .nav,body.print-report #toast,body.print-report .modal,body.print-report .page:not(#weeklyReport){display:none!important}
+}
 }
 </style>
 </head>
@@ -233,6 +233,7 @@ function loadAll(){products=read("madaProducts",[]);sales=read("madaSales",[]);c
 function money(n){return (Number(n)||0).toLocaleString("fr-FR")+" Ar"}
 function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function notify(m){const t=$("toast");t.textContent=m;t.style.display="block";clearTimeout(notify.timer);notify.timer=setTimeout(()=>t.style.display="none",2500)}
+function doPrint(cls,page,title){const st=document.getElementById("pageStyle")||document.head.appendChild(Object.assign(document.createElement("style"),{id:"pageStyle"}));st.textContent="@page{size:"+page+";margin:8mm}";const old=document.title;document.body.classList.add(cls);if(title)document.title=title;let done=()=>{document.body.classList.remove(cls);document.title=old;window.removeEventListener("afterprint",done)};window.addEventListener("afterprint",done);setTimeout(()=>window.print(),80)}
 function adminUser(){return{username:"admin",name:(settings.adminName||"").trim()||"Administrateur",phone:settings.adminPhone||"",email:settings.adminEmail||"",role:"admin"}}
 function isAdmin(){return currentUser?.role==="admin"}
 function visibleSales(){return sales}
@@ -331,8 +332,8 @@ $("loginBtn").addEventListener("click",login);$("loginRole").addEventListener("c
 $("navigation").addEventListener("click",e=>{let b=e.target.closest("button[data-page]");if(b)showPage(b.dataset.page)});
 $("saveProductBtn").addEventListener("click",saveProduct);$("cancelProductBtn").addEventListener("click",cancelProductEdit);$("pHasStock").addEventListener("change",()=>$("stockField").classList.toggle("hidden",$("pHasStock").value==="no"));$("productSearch").addEventListener("input",renderProducts);
 $("addClientBtn").addEventListener("click",addClient);$("clientSearch").addEventListener("input",renderClients);$("saleProduct").addEventListener("change",fillSalePrice);$("addCartBtn").addEventListener("click",addCartItem);$("reception").addEventListener("change",()=>{$("deliveryBox").classList.toggle("hidden",$("reception").value!=="Livraison");renderCart()});$("deliveryFee").addEventListener("input",renderCart);$("saveSaleBtn").addEventListener("click",saveSale);$("historySearch").addEventListener("input",renderHistory);
-$("saveExpenseBtn").addEventListener("click",saveExpense);$("expenseDate").value=localDateKey(new Date());$("reportWeekDate").value=localDateKey(new Date());$("reportWeekDate").addEventListener("change",renderWeeklyReport);$("exportWeeklyPdf").addEventListener("click",()=>{renderWeeklyReport();window.print()});$("addVendorBtn").addEventListener("click",addVendor);$("copyGeneratedCode").addEventListener("click",()=>{let code=$("generatedCode").textContent;if(!code)return;let fallback=()=>{let t=document.createElement("textarea");t.value=code;document.body.appendChild(t);t.select();document.execCommand("copy");t.remove();notify("Code copié")};if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(code).then(()=>notify("Code copié")).catch(fallback);else fallback()});$("saveSettingsBtn").addEventListener("click",saveSettings);$("changePasswordBtn").addEventListener("click",changePassword);$("backupBtn").addEventListener("click",backup);$("restoreBtn").addEventListener("click",()=>$("restoreFile").click());$("restoreFile").addEventListener("change",e=>{if(e.target.files[0])restore(e.target.files[0]);e.target.value=""});
-$("closeInvoiceBtn").addEventListener("click",()=>$("invoiceModal").classList.remove("show"));$("shareWaBtn").addEventListener("click",()=>shareInvoice("wa"));$("shareMailBtn").addEventListener("click",()=>shareInvoice("mail"));$("printInvoiceBtn").addEventListener("click",()=>window.print());
+$("saveExpenseBtn").addEventListener("click",saveExpense);$("expenseDate").value=localDateKey(new Date());$("reportWeekDate").value=localDateKey(new Date());$("reportWeekDate").addEventListener("change",renderWeeklyReport);$("exportWeeklyPdf").addEventListener("click",()=>{renderWeeklyReport();doPrint("print-report","A4 portrait","Rapport hebdomadaire")});$("addVendorBtn").addEventListener("click",addVendor);$("copyGeneratedCode").addEventListener("click",()=>{let code=$("generatedCode").textContent;if(!code)return;let fallback=()=>{let t=document.createElement("textarea");t.value=code;document.body.appendChild(t);t.select();document.execCommand("copy");t.remove();notify("Code copié")};if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(code).then(()=>notify("Code copié")).catch(fallback);else fallback()});$("saveSettingsBtn").addEventListener("click",saveSettings);$("changePasswordBtn").addEventListener("click",changePassword);$("backupBtn").addEventListener("click",backup);$("restoreBtn").addEventListener("click",()=>$("restoreFile").click());$("restoreFile").addEventListener("change",e=>{if(e.target.files[0])restore(e.target.files[0]);e.target.value=""});
+$("closeInvoiceBtn").addEventListener("click",()=>$("invoiceModal").classList.remove("show"));$("shareWaBtn").addEventListener("click",()=>shareInvoice("wa"));$("shareMailBtn").addEventListener("click",()=>shareInvoice("mail"));$("printInvoiceBtn").addEventListener("click",()=>doPrint("print-invoice","A5 portrait","Facture "+(invoiceCurrent?invoiceCurrent.invoiceNo:"")));
 loadAll();$("headerShopName").textContent=settings.shopName||"MADA SHOP";
 /* ====== SYNCHRONISATION EN LIGNE (Firebase Firestore) ====== */
 var cloudDb=null,cloudOn=false;
