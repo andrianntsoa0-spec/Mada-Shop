@@ -214,7 +214,7 @@ body{padding-bottom:225px}
 body{padding-bottom:calc(225px + var(--pbh,0px))!important}
 @media print{.nav,#presenceBar{display:none!important}body{padding-bottom:0!important}}
 .kb-hide{display:none!important}
-body.kb-on main{padding-bottom:60vh!important}
+body.kb-on main{padding-bottom:calc(var(--kbh,0px) + 16px)!important}
 </style>
 </head>
 <body class="booting">
@@ -277,7 +277,7 @@ body.kb-on main{padding-bottom:60vh!important}
  </div>
  <div class="card"><h3>Livraison</h3><label>Mode de réception</label><select id="reception"><option value="Récupération">Récupération</option><option value="Livraison">Livraison</option></select><div id="deliveryBox" class="hidden"><label>Frais de livraison (Ar) — 0 si gratuit</label><input id="deliveryFee" type="number" min="0" value="0" placeholder="Saisir les frais de livraison"></div><div id="dateBox"><label id="dateLabel">Date de récupération (facultatif)</label><input id="deliveryDate" type="date"></div><div class="row" style="margin-top:12px"><strong>Total à payer</strong><strong class="total" id="grandTotal">0 Ar</strong></div></div>
  <div class="hidden"><select id="docType"><option value="Facture">Facture</option><option value="Proforma">Proforma</option></select></div>
- <div class="card" id="payCard"><h3>Paiement</h3><div id="payFields"><label>Mode de paiement</label><select id="payment"><option>Espèces</option><option>Mobile Money</option><option>À la livraison</option></select><label>Montant reçu (Ar)</label><input id="paid" type="number" min="0" value="0"><label>Statut de paiement</label><select id="saleStatus"><option>Non payé</option><option>Acompte payé</option><option>Payé</option><option>Payé hors livraison</option><option>Payé livré</option></select></div><button id="saveSaleBtn" style="width:100%;margin-top:15px">VALIDER LA COMMANDE</button></div>
+ <div class="card" id="payCard"><h3>Paiement</h3><div id="payFields"><label>Mode de paiement</label><select id="payment"><option>Espèces</option><option>Mobile Money</option><option>À la livraison</option></select><label>Montant reçu (Ar)</label><input id="paid" type="number" min="0" value="0"><label>Statut de paiement</label><select id="saleStatus"><option>Non payé</option><option>Acompte payé</option><option>Payé</option><option>Payé hors livraison</option><option>Payé livré</option></select></div><button id="saveSaleBtn" style="width:100%;margin-top:15px">VALIDER LA COMMANDE</button><button class="btn2" id="cancelSaleBtn" type="button" style="width:100%;margin-top:7px">Annuler</button></div>
 </section>
 <section id="history" class="page"><div class="card"><div class="section-title"><h3>Factures</h3><button id="newInvoiceBtn" class="small">＋ Nouvelle facture</button></div><input id="historySearch" placeholder="Rechercher facture, client ou produit..."><div id="historyList"></div></div></section>
 <section id="delivery" class="page"><div class="card"><div class="section-title"><h3>Livraisons</h3><button id="newDeliveryBtn" class="small">＋ Nouvelle livraison</button></div>
@@ -427,7 +427,7 @@ function renderClients(){let q=$("clientSearch").value.toLowerCase();$("clientLi
 function renderClientSelect(){let cur=$("saleClient").value;$("saleClient").innerHTML='<option value="">Client de passage</option>'+clients.map(c=>`<option value="${c.id}">${esc(c.name)} - ${esc(c.phone)}</option>`).join("");$("saleClient").value=cur}
 function renderSaleProducts(){let cur=$("saleProduct").value;$("saleProduct").innerHTML='<option value="">Choisir un produit</option>'+products.map(p=>`<option value="${p.id}">${esc(p.name)} — ${money(p.sell??p.price)}</option>`).join("");$("saleProduct").value=cur}
 function fillSalePrice(){let p=products.find(x=>String(x.id)===$("saleProduct").value);$("salePrice").value=p?(p.sell??p.price??0):"";$("salePrice").readOnly=!!p&&!isAdmin();}
-function addCartItem(){let p=products.find(x=>String(x.id)===$("saleProduct").value),qty=Math.floor(Number($("saleQty").value)),price=Number($("salePrice").value);if(!p||qty<1||$("salePrice").value===""||price<0){notify("Zahao ny produit, quantité ary prix");return}if(!isAdmin()&&price!==Number(p.sell??p.price??0)){notify("Le vendeur ne peut pas modifier le prix");return}let old=cart.find(x=>String(x.productId)===String(p.id)),oldQty=old?old.qty:0;if(p.hasStock!==false&&oldQty+qty>Number(p.stock||0)){notify("Stock insuffisant");return}if(old){old.qty+=qty;old.price=price;old.subtotal=old.qty*price}else cart.push({productId:p.id,productName:p.name,qty,price,subtotal:qty*price});$("saleQty").value=1;renderCart();notify("Article ajouté")}
+function addCartItem(){let p=products.find(x=>String(x.id)===$("saleProduct").value),qty=Math.floor(Number($("saleQty").value)),price=Number($("salePrice").value);if(!p||qty<1||$("salePrice").value===""||price<0){notify("Zahao ny produit, quantité ary prix");return}if(!isAdmin()&&price!==Number(p.sell??p.price??0)){notify("Le vendeur ne peut pas modifier le prix");return}let old=cart.find(x=>String(x.productId)===String(p.id)),oldQty=old?old.qty:0;if(p.hasStock!==false&&oldQty+qty>Number(p.stock||0)){notify("Stock insuffisant");return}if(old){old.qty+=qty;old.price=price;old.subtotal=old.qty*price}else cart.push({productId:p.id,productName:p.name,qty,price,subtotal:qty*price});$("saleQty").value=1;$("saleProduct").value="";$("salePrice").value="";renderCart();notify("Article ajouté")}
 function removeCartItem(id){cart=cart.filter(x=>String(x.productId)!==String(id));renderCart()}
 function subtotal(){return cart.reduce((a,x)=>a+x.qty*x.price,0)}
 function fee(){return $("reception").value==="Livraison"?Math.max(0,Number($("deliveryFee").value)||0):0}
@@ -685,12 +685,14 @@ const TXT=/^(text|search|number|tel|email|password|url)$/i;
 let cont=null,hid=[];
 const isTxt=e=>!!(e&&e.closest&&e.closest(".page")&&((e.tagName==="INPUT"&&TXT.test(e.type||"text"))||e.tagName==="TEXTAREA"));
 const hide=n=>{if(n.nodeType===1&&!n.matches("script,style")&&!n.classList.contains("kb-hide")){n.classList.add("kb-hide");hid.push(n)}};
+function kbh(){const v=window.visualViewport;document.documentElement.style.setProperty("--kbh",(v?Math.max(0,Math.round(innerHeight-v.height-v.offsetTop)):0)+"px")}
+if(window.visualViewport)visualViewport.addEventListener("resize",kbh);
 function exit(){hid.forEach(n=>n.classList.remove("kb-hide"));hid=[];cont=null;document.body.classList.remove("kb-on")}
 function top(){if(!cont)return;const h=document.querySelector("header");let m=8;if(h){const p=getComputedStyle(h).position;if(p==="sticky"||p==="fixed")m+=h.offsetHeight}cont.style.scrollMarginTop=m+"px";cont.scrollIntoView({block:"start"})}
 function enter(el){
  const c=el.closest("#deliveryForm,.card");if(!c)return;
  if(cont===c){setTimeout(top,60);return}
- exit();cont=c;document.body.classList.add("kb-on");
+ exit();cont=c;document.body.classList.add("kb-on");kbh();
  const page=c.closest(".page");let n=c;
  if(page&&page.id==="sales"){setTimeout(top,60);setTimeout(top,350);return}
  while(n&&n!==page&&n.parentElement){[...n.parentElement.children].forEach(x=>{if(x!==n)hide(x)});n=n.parentElement}
@@ -705,6 +707,15 @@ document.addEventListener("click",e=>{if(cont&&e.target.closest&&cont.contains(e
 if(window.visualViewport)visualViewport.addEventListener("resize",()=>{
  if(cont&&visualViewport.height>innerHeight*.9)setTimeout(()=>{if(cont&&visualViewport.height>innerHeight*.9){try{document.activeElement.blur()}catch(_){}exit()}},150)});
 })();
+</script>
+<script>
+document.getElementById("cancelSaleBtn").addEventListener("click",function(){
+ const d=$("docType").value!=="Facture";
+ cart=[];$("paid").value=0;$("saleStatus").value="Non payé";$("docType").value="Facture";togglePay();
+ $("saleClient").value="";$("saleProduct").value="";$("saleQty").value=1;$("salePrice").value="";
+ $("reception").value="Récupération";$("deliveryFee").value=0;$("deliveryDate").value="";$("deliveryBox").classList.add("hidden");
+ updateDateLabel();renderCart();showPage(d?"proforma":"history");
+});
 </script>
 </body>
 </html>
