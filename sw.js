@@ -1,9 +1,15 @@
-const CACHE = "mada-shop-v32";
-const ASSETS = ["./", "./index.html", "./manifest.json", "./logo.PNG",
+const CACHE = "mada-shop-v33";
+const ASSETS = ["./", "./index.html", "./manifest.json", "./logo.png",
   "./icon-192.png", "./icon-512.png"];
+const NET_TIMEOUT = 4000; // ms : au-delà, on sert la version en cache (évite le chargement interminable)
 
 self.addEventListener("install", e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  // Chaque fichier est ajouté séparément : un fichier manquant ne doit pas bloquer l'installation
+  e.waitUntil(
+    caches.open(CACHE)
+      .then(c => Promise.all(ASSETS.map(a => c.add(a).catch(() => {}))))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener("activate", e => {
@@ -19,12 +25,26 @@ self.addEventListener("fetch", e => {
   const url = new URL(req.url);
   // Firebase/Firestore et autres sites externes : laisser passer (Firebase gère sa synchro)
   if (url.origin !== location.origin) return;
-  // Réseau d'abord (toujours la dernière version), cache si hors ligne
-  e.respondWith(
+
+  const fromCache = () => caches.match(req, { ignoreSearch: true }).then(r => r || caches.match("./index.html"));
+
+  // Réseau d'abord (dernière version) mais avec délai maximum, sinon cache
+  e.respondWith(new Promise(resolve => {
+    let done = false;
+    const timer = setTimeout(() => {
+      fromCache().then(r => { if (r && !done) { done = true; resolve(r); } });
+    }, NET_TIMEOUT);
     fetch(req).then(res => {
-      const copy = res.clone();
-      caches.open(CACHE).then(c => c.put(req, copy));
-      return res;
-    }).catch(() => caches.match(req).then(r => r || caches.match("./index.html")))
-  );
+      clearTimeout(timer);
+      if (res && res.ok) {
+        const copy = res.clone();
+        caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {});
+      }
+      if (!done) { done = true; resolve(res); }
+    }).catch(() => {
+      clearTimeout(timer);
+      if (done) return;
+      fromCache().then(r => { done = true; resolve(r || Response.error()); });
+    });
+  }));
 });
