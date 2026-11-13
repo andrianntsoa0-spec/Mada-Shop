@@ -86,6 +86,36 @@ header .logout{margin-left:auto;padding:9px 11px;background:#edf3ef;color:#36534
 .badge{display:inline-block;border-radius:20px;padding:4px 8px;background:#eef4ef;color:#315d45;font-size:10px;font-weight:700}
 #toast{pointer-events:none}
 @media(min-width:650px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}.container{padding:20px 18px}.stat{padding:16px}.nav{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* === Accueil compact === */
+header{padding:7px 12px;gap:9px}
+header img{width:34px;height:34px;border-radius:8px}
+header h2{font-size:15px}header small{font-size:10.5px}
+header .logout{padding:6px 9px;font-size:11px}
+#dashboard .container,.container{padding-top:8px}
+#welcomeBanner{padding:7px 10px!important;margin-bottom:7px!important;gap:9px!important;border-radius:11px!important}
+#welcomeBanner img{width:30px!important;height:30px!important;border-radius:8px!important}
+#welcomeBanner strong{font-size:13px!important}#welcomeBanner div div{font-size:11px!important}
+#dashboard .grid{gap:6px}
+#dashboard .stat{padding:7px 10px;border-radius:11px}
+#dashboard .stat-top{margin-bottom:2px}
+#dashboard .stat-icon{width:24px;height:24px;border-radius:8px;font-size:13px}
+#dashboard .stat small{font-size:9.5px;line-height:1.2}
+#dashboard .stat strong{font-size:clamp(14px,4vw,17px);line-height:1.15}
+#dashboard>.card{padding:9px 12px;margin-top:7px!important}
+#dashboard>.card h3{font-size:14px;margin-bottom:4px}
+#dashboard>.card .item{padding:6px 0}
+#statToday{color:#2563eb!important}
+#statTotalSales{color:#087b50!important}
+#statCash{color:#d97706!important}
+#statCount{color:#7c3aed!important}
+#statProducts{color:#0e7490!important}
+#statExpenses{color:#dc2626!important}
+#statCaisse{color:#4d7c0f!important}
+#calcTile strong{color:#334155!important}
+#presenceBar{margin:0 auto 14px;max-width:830px;background:#fff;border-radius:12px;padding:9px 12px;box-shadow:0 2px 9px #00000010;display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12.5px}
+#presenceBar:empty{display:none}
+#presenceBar b{color:#087b50}
 @media(max-width:380px){.nav{gap:6px;padding:8px}.nav button{font-size:10px;min-height:52px}}
 @media print{
  body.print-invoice #app,body.print-invoice #loginScreen,body.print-invoice #toast,body.print-invoice #cloudBadge{display:none!important}
@@ -269,6 +299,7 @@ header .logout{margin-left:auto;padding:9px 11px;background:#edf3ef;color:#36534
 <nav class="nav" id="navigation">
  <button data-page="dashboard" class="active"><span>⌂</span>Accueil</button><button data-page="products"><span>▣</span>Produits</button><button data-page="clients"><span>♙</span>Clients</button><button data-page="delivery" id="navDelivery"><span>🚚</span>Livraison<small id="navDelNext"></small><i class="dbadge hidden" id="deliveryBadge"></i></button><button data-page="history"><span>▤</span>Factures</button><button data-page="proforma"><span>📄</span>Proforma</button><button data-page="weeklyReport"><span>📊</span>Rapport hebdo</button><button data-page="expenses"><span>🛒</span>Achats / Dépenses</button><button data-page="settings" class="adminOnly"><span>⚙</span>Paramètres</button>
 </nav>
+<div id="presenceBar"></div>
 </main></div>
 <div id="invoiceModal" class="modal"><div class="modal-box"><div class="modal-actions"><button class="btn2" id="closeInvoiceBtn">Fermer</button><button id="pdfInvoiceBtn">Enregistrer en PDF</button><button class="btn2" id="sharePdfBtn">Partager PDF</button><button class="btn2" id="printInvoiceBtn">Imprimer</button><button id="convertInvoiceBtn" class="hidden">Convertir en facture</button><button class="btn2" id="signClientBtn">✍ Signature client</button><button class="btn2" id="signSellerBtn">✍ Signature vendeur</button><button class="btn2" id="shareWaBtn">WhatsApp</button><button class="btn2" id="shareMailBtn">E-mail</button></div><div id="invoicePaper" class="invoice"></div></div></div>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -475,7 +506,8 @@ function loadSettingsForm(){$("shopName").value=settings.shopName||"MADA SHOP";$
 function saveSettings(){settings={shopName:$("shopName").value.trim()||"MADA SHOP",phone:$("shopPhone").value.trim(),address:$("shopAddress").value.trim(),email:$("shopEmail").value.trim(),adminName:$("adminName").value.trim(),adminPhone:$("adminPhone").value.trim(),adminEmail:$("adminEmail").value.trim()};write("madaSettings",settings);$("headerShopName").textContent=settings.shopName;if(isAdmin()){currentUser=adminUser();$("userInfo").textContent=currentUser.name+" • ADMIN"}notify("Paramètres enregistrés")}
 function deleteExpense(id){if(!isAdmin()||!confirm("Supprimer cette dépense ?"))return;expenses=expenses.filter(e=>String(e.id)!==String(id));write("madaExpenses",expenses);renderExpenses();renderDashboard();notify("Dépense supprimée")}
 async function addVendor(){if(!isAdmin()){notify("Action réservée à Admin");return}let name=$("vName").value.trim(),username=$("vUsername").value.trim().toLowerCase();if(!name||!username){notify("Saisissez le nom et l'identifiant");return}if(!/^[a-z0-9._-]{3,30}$/.test(username)||username==="admin"){notify("Identifiant invalide (3-30 caractères : minuscules, chiffres, . _ -)");return}if(vendors.some(v=>String(v.username||"").toLowerCase()===username)){notify("Identifiant déjà utilisé");return}const accessCode=String(Math.floor(100000+Math.random()*900000)),btn=$("addVendorBtn");btn.disabled=true;try{const uid=await provisionVendor(username,accessCode,false),nv={id:uid,name,phone:$("vPhone").value.trim(),email:$("vEmail").value.trim(),username,accessCode,active:true};await cloudDb.collection("users").doc(uid).set({name:nv.name,phone:nv.phone,email:nv.email,username,accessCode,active:true});lastNewVendor=nv;$("vName").value=$("vPhone").value=$("vEmail").value=$("vUsername").value="";$("generatedCode").textContent=accessCode;$("newVendorCode").classList.remove("hidden");notify("Compte vendeur créé. Envoi des accès…");autoSendVendor(nv)}catch(e){console.error(e);notify(e.code==="auth/email-already-in-use"?"Identifiant déjà utilisé":"Erreur de création du compte")}finally{btn.disabled=false}}
-function renderVendors(){if(!isAdmin()){$("vendorList").innerHTML="";return}$("vendorList").innerHTML=presenceSummary()+vendors.map(v=>`<div class="item"><div class="itemhead"><strong>${esc(v.name)}</strong><span style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end"><span class="badge">${v.active===false?"Désactivé":"Actif"}</span>${isOn(v.id)?'<span class="badge" style="background:#d9f3e4;color:#087b50">● connecté</span>':'<span class="badge" style="background:#eceeed;color:#6b7570">○ déconnecté</span>'}</span></div><div class="muted">Identifiant : ${esc(v.username)} • Tél. : ${esc(v.phone||"—")} • E-mail : ${esc(v.email||"—")}</div><div style="margin-top:7px;font-weight:700;color:#075b3d">Code : ${esc(v.accessCode||"Ancien compte — ancien mot de passe")}</div><div class="actions">${v.accessCode?`<button class="btn2" onclick="copyVendorCode('${v.id}')">Copier le code</button>`:""}${v.accessCode&&v.phone?`<button class="btn2" onclick="resendVendor('${v.id}','wa')">WhatsApp</button>`:""}${v.accessCode&&v.email?`<button class="btn2" onclick="resendVendor('${v.id}','mail')">E-mail</button>`:""}<button class="btn2" onclick="resetVendorCode('${v.id}')">Nouveau code</button><button class="btn2" onclick="toggleVendor('${v.id}')">${v.active===false?"Activer":"Désactiver"}</button><button class="btnred" onclick="deleteVendor('${v.id}')">Supprimer</button></div></div>`).join("")||'<p class="muted">Aucun vendeur.</p>'}
+function renderPresenceBar(){const b=document.getElementById("presenceBar");if(!b)return;if(!currentUser||!isAdmin()){b.innerHTML="";return}const on=vendors.filter(v=>v.active!==false&&isOn(v.id));b.innerHTML=on.length?on.map(v=>"<span>"+esc(v.username)+" : <b>● connecté</b></span>").join(""):'<span class="muted">Aucun vendeur connecté</span>'}
+function renderVendors(){try{renderPresenceBar()}catch(_){}if(!isAdmin()){$("vendorList").innerHTML="";return}$("vendorList").innerHTML=presenceSummary()+vendors.map(v=>`<div class="item"><div class="itemhead"><strong>${esc(v.name)}</strong><span style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end"><span class="badge">${v.active===false?"Désactivé":"Actif"}</span>${isOn(v.id)?'<span class="badge" style="background:#d9f3e4;color:#087b50">● connecté</span>':'<span class="badge" style="background:#eceeed;color:#6b7570">○ déconnecté</span>'}</span></div><div class="muted">Identifiant : ${esc(v.username)} • Tél. : ${esc(v.phone||"—")} • E-mail : ${esc(v.email||"—")}</div><div style="margin-top:7px;font-weight:700;color:#075b3d">Code : ${esc(v.accessCode||"Ancien compte — ancien mot de passe")}</div><div class="actions">${v.accessCode?`<button class="btn2" onclick="copyVendorCode('${v.id}')">Copier le code</button>`:""}${v.accessCode&&v.phone?`<button class="btn2" onclick="resendVendor('${v.id}','wa')">WhatsApp</button>`:""}${v.accessCode&&v.email?`<button class="btn2" onclick="resendVendor('${v.id}','mail')">E-mail</button>`:""}<button class="btn2" onclick="resetVendorCode('${v.id}')">Nouveau code</button><button class="btn2" onclick="toggleVendor('${v.id}')">${v.active===false?"Activer":"Désactiver"}</button><button class="btnred" onclick="deleteVendor('${v.id}')">Supprimer</button></div></div>`).join("")||'<p class="muted">Aucun vendeur.</p>'}
 let lastNewVendor=null;
 function appLink(){return location.href.split("#")[0].split("?")[0].replace(/index\.html$/,"")}
 function vendorMsg(v){return "Bonjour "+v.name+",\n\nVotre compte vendeur "+(settings.shopName||"MADA SHOP")+" a été créé.\n\nLien de l'application : "+appLink()+"\nIdentifiant : "+v.username+"\nMot de passe : "+v.accessCode+"\n\nConnectez-vous avec le type de compte « VENDEUR ».\nMerci !"}
