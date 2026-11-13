@@ -1,4 +1,4 @@
-const CACHE = "mada-shop-v20";
+const CACHE = "mada-shop-v22";
 const ASSETS = ["./", "./index.html", "./manifest.json", "./logo.PNG",
   "./icon-192.png", "./icon-512.png"];
 
