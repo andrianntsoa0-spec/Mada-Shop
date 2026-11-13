@@ -213,6 +213,7 @@ body{padding-bottom:225px}
 .nav{bottom:var(--pbh,0px)!important;border-radius:16px 16px 0 0!important}
 body{padding-bottom:calc(225px + var(--pbh,0px))!important}
 @media print{.nav,#presenceBar{display:none!important}body{padding-bottom:0!important}}
+.kb-hide{display:none!important}
 </style>
 </head>
 <body class="booting">
@@ -674,6 +675,34 @@ authStart();
 </script>
 <script>
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}
+</script>
+<script>
+/* Mode saisie (mobile) : pendant la frappe, seul le formulaire / champ de recherche reste affiché en haut ; le reste de la page est masqué puis réaffiché */
+(function(){
+if(!window.matchMedia||!matchMedia("(pointer:coarse)").matches)return;
+const TXT=/^(text|search|number|tel|email|password|url)$/i;
+let cont=null,hid=[];
+const isTxt=e=>!!(e&&e.closest&&e.closest(".page")&&((e.tagName==="INPUT"&&TXT.test(e.type||"text"))||e.tagName==="TEXTAREA"));
+const hide=n=>{if(n.nodeType===1&&!n.matches("script,style")&&!n.classList.contains("kb-hide")){n.classList.add("kb-hide");hid.push(n)}};
+function exit(){hid.forEach(n=>n.classList.remove("kb-hide"));hid=[];cont=null}
+function top(){if(!cont)return;const h=document.querySelector("header");let m=8;if(h){const p=getComputedStyle(h).position;if(p==="sticky"||p==="fixed")m+=h.offsetHeight}cont.style.scrollMarginTop=m+"px";cont.scrollIntoView({block:"start"})}
+function enter(el){
+ const c=el.closest("#deliveryForm,.card");if(!c)return;
+ if(cont===c){setTimeout(top,60);return}
+ exit();cont=c;
+ const page=c.closest(".page");let n=c;
+ while(n&&n!==page&&n.parentElement){[...n.parentElement.children].forEach(x=>{if(x!==n)hide(x)});n=n.parentElement}
+ if(el.type==="search"||/search/i.test(el.id||"")){let after=false;[...el.parentElement.children].forEach(x=>{if(after)hide(x);if(x===el)after=true})}
+ setTimeout(top,60);setTimeout(top,350);
+}
+document.addEventListener("focusin",e=>{if(isTxt(e.target))enter(e.target)});
+document.addEventListener("focusout",e=>{
+ if(cont&&e.relatedTarget&&cont.contains(e.relatedTarget))return;
+ setTimeout(()=>{const a=document.activeElement;if(cont&&!isTxt(a)&&!(a&&a!==document.body&&cont.contains(a)))exit()},200)});
+document.addEventListener("click",e=>{if(cont&&e.target.closest&&cont.contains(e.target)&&e.target.closest("button"))setTimeout(()=>{if(!isTxt(document.activeElement))exit()},350)},true);
+if(window.visualViewport)visualViewport.addEventListener("resize",()=>{
+ if(cont&&visualViewport.height>innerHeight*.9)setTimeout(()=>{if(cont&&visualViewport.height>innerHeight*.9){try{document.activeElement.blur()}catch(_){}exit()}},150)});
+})();
 </script>
 </body>
 </html>
