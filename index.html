@@ -213,6 +213,7 @@ body{padding-bottom:225px}
 .nav{bottom:var(--pbh,0px)!important;border-radius:16px 16px 0 0!important}
 body{padding-bottom:calc(225px + var(--pbh,0px))!important}
 @media print{.nav,#presenceBar{display:none!important}body{padding-bottom:0!important}}
+body.kb-open .nav,body.kb-open #presenceBar,body.kb-open #cloudBadge,body.kb-open #adminNotif{display:none!important}
 </style>
 </head>
 <body class="booting">
@@ -674,6 +675,15 @@ authStart();
 </script>
 <script>
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}
+</script>
+<script>
+/* Masquer la barre du bas quand le clavier est ouvert */
+(function(){const T=/^(INPUT|TEXTAREA|SELECT)$/,NO=/^(checkbox|radio|button|submit|file|range|color)$/;
+const isTxt=e=>e&&T.test(e.tagName)&&!NO.test(e.type||"");
+const set=v=>document.body.classList.toggle("kb-open",v);
+document.addEventListener("focusin",e=>{if(isTxt(e.target))set(true)});
+document.addEventListener("focusout",()=>setTimeout(()=>set(isTxt(document.activeElement)),80));
+})();
 </script>
 </body>
 </html>
