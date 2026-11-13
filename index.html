@@ -214,6 +214,7 @@ body{padding-bottom:225px}
 body{padding-bottom:calc(225px + var(--pbh,0px))!important}
 @media print{.nav,#presenceBar{display:none!important}body{padding-bottom:0!important}}
 .kb-hide{display:none!important}
+body.kb-on main{padding-bottom:60vh!important}
 </style>
 </head>
 <body class="booting">
@@ -684,13 +685,14 @@ const TXT=/^(text|search|number|tel|email|password|url)$/i;
 let cont=null,hid=[];
 const isTxt=e=>!!(e&&e.closest&&e.closest(".page")&&((e.tagName==="INPUT"&&TXT.test(e.type||"text"))||e.tagName==="TEXTAREA"));
 const hide=n=>{if(n.nodeType===1&&!n.matches("script,style")&&!n.classList.contains("kb-hide")){n.classList.add("kb-hide");hid.push(n)}};
-function exit(){hid.forEach(n=>n.classList.remove("kb-hide"));hid=[];cont=null}
+function exit(){hid.forEach(n=>n.classList.remove("kb-hide"));hid=[];cont=null;document.body.classList.remove("kb-on")}
 function top(){if(!cont)return;const h=document.querySelector("header");let m=8;if(h){const p=getComputedStyle(h).position;if(p==="sticky"||p==="fixed")m+=h.offsetHeight}cont.style.scrollMarginTop=m+"px";cont.scrollIntoView({block:"start"})}
 function enter(el){
  const c=el.closest("#deliveryForm,.card");if(!c)return;
  if(cont===c){setTimeout(top,60);return}
- exit();cont=c;
+ exit();cont=c;document.body.classList.add("kb-on");
  const page=c.closest(".page");let n=c;
+ if(page&&page.id==="sales"){setTimeout(top,60);setTimeout(top,350);return}
  while(n&&n!==page&&n.parentElement){[...n.parentElement.children].forEach(x=>{if(x!==n)hide(x)});n=n.parentElement}
  if(el.type==="search"||/search/i.test(el.id||"")){let after=false;[...el.parentElement.children].forEach(x=>{if(after)hide(x);if(x===el)after=true})}
  setTimeout(top,60);setTimeout(top,350);
