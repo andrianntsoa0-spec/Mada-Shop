@@ -1,4 +1,4 @@
-const CACHE = "mada-shop-v101";
+const CACHE = "mada-shop-v102";
 const ASSETS = ["./", "./index.html", "./manifest.json", "./logo.png",
   "./icon-192.png", "./icon-512.png"];
 const NET_TIMEOUT = 4000; // ms : au-delà, on sert la version en cache (évite le chargement interminable)
