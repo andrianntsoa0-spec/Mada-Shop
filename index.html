@@ -216,6 +216,8 @@ body{padding-bottom:calc(225px + var(--pbh,0px))!important}
 .kb-hide{display:none!important}
 body.kb-on main{padding-bottom:calc(var(--kbh,0px) + 16px)!important}
 #dashTomorrow{margin-top:12px;padding-top:12px}#dashTomorrow .dtHead{font-size:13px;margin-bottom:6px}#dashTomorrow .dtRow{font-size:12.5px;padding:8px 0;border-bottom:1px solid #eef2ef}#dashTomorrow .dtMore{font-size:12px;padding-top:8px;font-weight:600;color:#087b50}
+html:has(#dashboard.active),body:has(#dashboard.active){overflow:hidden!important;overscroll-behavior:none;height:100%}
+#dashboard.active{touch-action:none}
 </style>
 </head>
 <body class="booting">
