@@ -1,4 +1,4 @@
-const CACHE = "mada-shop-v73";
+const CACHE = "mada-shop-v74";
 const ASSETS = ["./", "./index.html", "./manifest.json", "./logo.png",
   "./icon-192.png", "./icon-512.png"];
 const NET_TIMEOUT = 4000; // ms : au-delà, on sert la version en cache (évite le chargement interminable)
@@ -48,3 +48,5 @@ self.addEventListener("fetch", e => {
     });
   }));
 });
+
+self.addEventListener("notificationclick",e=>{e.notification.close();e.waitUntil(clients.matchAll({type:"window",includeUncontrolled:true}).then(l=>l.length?l[0].focus():clients.openWindow("./")))});
