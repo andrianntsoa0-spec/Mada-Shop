@@ -62,7 +62,8 @@ header .logout{margin-left:auto;padding:9px 11px;background:#edf3ef;color:#36534
 .invoice h2{color:#344c40;margin:0 0 6px}.invoice .inv-top{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;border-bottom:1.5px solid #9eaaa2;padding-bottom:10px}
 .invoice .inv-brand{font-size:21px;font-weight:800;letter-spacing:.3px;color:#344c40}
 .shop-red{color:#d62828!important}
-.shop-green{color:#3ab54a!important}.invoice .inv-meta{text-align:right}
+.shop-green{color:#3ab54a!important}
+.inv-details{align-items:start!important}.invoice .inv-meta{text-align:right}
 .invoice .inv-label{font-size:16px;letter-spacing:1.1px;color:#344c40;font-weight:800}
 .invoice .inv-no{font-size:9px;font-weight:600;color:#59645d;margin:2px 0;letter-spacing:.1px;overflow-wrap:anywhere}
 .invoice .inv-details{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
@@ -474,11 +475,11 @@ function amountInWords(n){
 function invoiceHtml(s){
  let rows=getItems(s).map(x=>`<tr><td>${esc(x.productName)}</td><td>${x.qty}</td><td class="right">${money(x.price)}</td><td class="right">${money(x.subtotal??x.qty*x.price)}</td></tr>`).join("");
  let isAdm=s.sellerUsername==="admin";let sName=isAdm&&settings.adminName?settings.adminName:(s.sellerName||"");let sMail=isAdm&&settings.adminEmail?settings.adminEmail:(s.sellerEmail||"");let sellerPhone=formatMgPhone((isAdm&&settings.adminPhone)?settings.adminPhone:(s.sellerPhone||""));
- let clientPhone=[s.clientPhone,s.clientPhone2].filter(Boolean).map(x=>formatMgPhone(x)).join(" / ");
+ let clientPhone=[s.clientPhone,s.clientPhone2].filter(Boolean).map(x=>formatMgPhone(x));if(!clientPhone.length)clientPhone=[""];
  let total=saleTotal(s);
  let client=clients.find(c=>String(c.id)===String(s.clientId));
  let clientEmail=s.clientEmail||client?.email||"";let deliveryAddress=s.clientAddress||client?.address||"";
- let clientBlock=`<div class="inv-panel"><div class="inv-label">CLIENT</div><strong>${esc(s.clientName||"Client de passage")}</strong><br>Contact : ${esc(clientPhone)}${clientEmail?"<br>E-mail : "+esc(clientEmail):""}`+(s.delivery==="Livraison"?`<br><strong>Lieu de livraison :</strong> ${esc(deliveryAddress||"Adresse client non renseignée")}`+(s.deliveryDate?`<br><strong>Date de livraison :</strong> ${esc(fmtYmd(s.deliveryDate))}`:""):(s.deliveryDate?`<br><strong>Date de récupération :</strong> ${esc(fmtYmd(s.deliveryDate))}`:""))+`</div>`;
+ let clientBlock=`<div class="inv-panel"><div class="inv-label">CLIENT</div><strong>${esc(s.clientName||"Client de passage")}</strong><br>${clientPhone.map((x,i)=>(i?"Contact "+(i+1):"Contact")+" : "+esc(x)).join("<br>")}${clientEmail?"<br>E-mail : "+esc(clientEmail):""}`+(s.delivery==="Livraison"?`<br><strong>Lieu de livraison :</strong> ${esc(deliveryAddress||"Adresse client non renseignée")}`+(s.deliveryDate?`<br><strong>Date de livraison :</strong> ${esc(fmtYmd(s.deliveryDate))}`:""):(s.deliveryDate?`<br><strong>Date de récupération :</strong> ${esc(fmtYmd(s.deliveryDate))}`:""))+`</div>`;
  let sellerBlock=`<div class="inv-panel"><div class="inv-label">VENDEUR</div><strong>${esc(sName)}</strong><br>Tél. : ${esc(sellerPhone)}<br>E-mail : ${esc(sMail||"—")}</div>`;
  let invoiceDate=new Date(s.date);let monthsShort=["Jan.","Fév.","Mar.","Avr.","Mai","Juin","Juil.","Août","Sept.","Oct.","Nov.","Déc."];let dateText=String(invoiceDate.getDate()).padStart(2,"0")+" "+monthsShort[invoiceDate.getMonth()]+" "+invoiceDate.getFullYear();let timeText=new Intl.DateTimeFormat("fr-FR",{hour:"2-digit",minute:"2-digit",hour12:false}).format(invoiceDate);
  return `<div class="inv-top" style="display:block;text-align:center"><div style="display:flex;flex-direction:column;align-items:center;gap:4px"><img src="${LOGO_JPG}" alt="Logo" style="width:76px;height:76px;object-fit:contain"><div><div class="inv-brand">${brandHtml(settings.shopName||"MADA SHOP")}</div><div style="font-size:11px;color:#747e78;margin-top:4px">${esc(settings.address||"")}</div><div style="font-size:11px;color:#747e78">${esc(formatMgPhone(settings.phone||""))}</div>${settings.email?`<div style="font-size:11px;color:#747e78">${esc(settings.email)}</div>`:""}</div></div><div class="inv-meta" style="text-align:left;margin-top:10px"><div class="inv-label">${esc(docLabel(s).toUpperCase())}</div><div class="inv-no">${esc(s.invoiceNo)}</div><div style="font-size:10px;font-weight:600;color:#747e78;margin-top:3px">${esc(dateText)}</div><div style="font-size:10px;color:#747e78;margin-top:1px">${esc(timeText)}</div></div></div>
@@ -515,13 +516,16 @@ const txtBrand=(t,x,yy,sz,bold,c,al)=>{t=T(t);const parts=t.split(/(\b(?:mada|sh
  txt(settings.address||"",297.5,106,9,0,GR,"c");txt(formatMgPhone(settings.phone||""),297.5,118,9,0,GR,"c");if(settings.email)txt(settings.email,297.5,130,9,0,GR,"c");
  txt(docLabel(s).toUpperCase(),40,156,13,1,G);txt(s.invoiceNo||"",40,171,10,1,INK);txt(dateText+" - "+timeText,40,184,9,0,GR);
  line(40,194,555,G,1.5);ops+="1 0 0 1 0 -92 cm\n";
- rect(40,116,250,86,"0.95 0.97 0.96");rect(305,116,250,86,"0.95 0.97 0.96");
+ const p1=formatMgPhone(s.clientPhone||""),p2=s.clientPhone2?formatMgPhone(s.clientPhone2):"";
+ const cLn=["Contact : "+(p1||"-")];if(p2)cLn.push("Contact 2 : "+p2);if(cMail)cLn.push("E-mail : "+cMail);
+ if(s.delivery==="Livraison"){wrap("Livraison : "+(cAddr||"adresse non renseignée"),46).forEach(l=>cLn.push(l));if(s.deliveryDate)cLn.push("Date de livraison : "+fmtYmd(s.deliveryDate))}else if(s.deliveryDate)cLn.push("Date de récupération : "+fmtYmd(s.deliveryDate));
+ const vh=66,ch=52+(cLn.length-1)*12,TB=116+Math.max(vh,ch)+8;
+ rect(40,116,250,vh,"0.95 0.97 0.96");rect(305,116,250,ch,"0.95 0.97 0.96");
  txt("VENDEUR",50,131,8,1,G);txt(sName,50,146,10,1);txt("Tél. : "+sPhone,50,160,9);txt("E-mail : "+(sMail||"-"),50,173,9);
- txt("CLIENT",315,131,8,1,G);txt(s.clientName||"Client de passage",315,146,10,1);txt("Contact : "+([s.clientPhone,s.clientPhone2].filter(Boolean).map(x=>formatMgPhone(x)).join(" / ")||"-"),315,160,9);
- let cy=173;if(cMail){txt("E-mail : "+cMail,315,cy,9);cy+=12}
- if(s.delivery==="Livraison"){txt("Livraison : "+(cAddr||"adresse non renseignée"),315,cy,9);if(s.deliveryDate)txt("Date de livraison : "+fmtYmd(s.deliveryDate),315,cy+12,9)}else if(s.deliveryDate)txt("Date de récupération : "+fmtYmd(s.deliveryDate),315,cy,9)
- rect(40,206,515,22,G);txt("Produit",48,221,10,1,W);txt("Qté",330,221,10,1,W);txt("Prix unitaire",465,221,10,1,W,"r");txt("Total",547,221,10,1,W,"r");
- y=246;
+ txt("CLIENT",315,131,8,1,G);txt(s.clientName||"Client de passage",315,146,10,1);
+ cLn.forEach((l,i)=>txt(l,315,160+i*12,9));
+ rect(40,TB,515,22,G);txt("Produit",48,TB+15,10,1,W);txt("Qté",330,TB+15,10,1,W);txt("Prix unitaire",465,TB+15,10,1,W,"r");txt("Total",547,TB+15,10,1,W,"r");
+ y=TB+40;
  const np=()=>{pages.push(ops);ops="";y=50};
  items.forEach(x=>{let ls=wrap(x.productName,50);if(y+ls.length*13>(pages.length===0?700:790))np();
   ls.forEach((l,i)=>{txt(l,48,y+i*13,10);if(i===0){txt(String(x.qty),330,y,10);txt(money(x.price),465,y,10,0,INK,"r");txt(money(x.subtotal??x.qty*x.price),547,y,10,0,INK,"r")}});
