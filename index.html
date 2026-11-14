@@ -11,6 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="MADA SHOP">
 <title>MADA SHOP — Gestion de vente</title>
+<script>try{if(localStorage.getItem("madaTheme")==="dark")document.documentElement.classList.add("dark")}catch(e){}</script>
 <style>
 :root{--green:#087b50;--green2:#075b3d;--pale:#eaf5ef;--bg:#f3f6f4;--ink:#1d2923;--muted:#718078;--line:#e5ece7;--red:#c73535;--blue:#2563eb}
 *{box-sizing:border-box}
@@ -228,13 +229,55 @@ body.role-livreur .nav button:not([data-page="dashboard"]):not([data-page="deliv
 body.role-livreur #newDeliveryBtn{display:none!important}
 #newProductBtn,#newClientBtn,#newExpenseBtn{position:sticky;top:calc(var(--hh,68px) + 6px);z-index:4;box-shadow:0 3px 10px #0002}
 #history>.card>.section-title,#proforma>.card>.section-title{position:sticky;top:var(--hh,68px);z-index:4;background:#fff;padding:8px 0;margin-top:-8px;box-shadow:0 6px 8px -8px #0003}
+
+/* ===== Mode sombre / clair ===== */
+.themeBtn{margin-left:auto;padding:9px 11px;background:#edf3ef;color:#365346;font-size:15px;line-height:1;border-radius:10px}
+.themeBtn+.logout{margin-left:0}
+html.dark{color-scheme:dark;--bg:#0e1511;--ink:#e4eee8;--muted:#93a399;--line:#26342b;--pale:#1d3328;--green2:#6fdcaa;--card:#17211b}
+html.dark body{background:var(--bg);color:var(--ink)}
+html.dark header,html.dark .card,html.dark .stat,html.dark .nav,html.dark #presenceBar{background:var(--card)}
+html.dark .card,html.dark .stat{border-color:#26342b;box-shadow:none}
+html.dark header{box-shadow:0 2px 9px #0006}
+html.dark input,html.dark select,html.dark textarea{background:#101813;border-color:#2d3d33;color:var(--ink)}
+html.dark input::placeholder,html.dark textarea::placeholder{color:#6b7b71}
+html.dark label{color:#a8b9ae}
+html.dark hr{border-color:#26342b}
+html.dark .stat small{color:#9aab9f}
+html.dark .stat strong{color:#6fdcaa}
+html.dark .stat-icon{background:#1f3a2e}
+html.dark #statToday{color:#6ea8ff!important}html.dark #statTotalSales{color:#4ed39a!important}html.dark #statCash{color:#fbbf24!important}html.dark #statCount{color:#c4a1ff!important}html.dark #statProducts{color:#4fd1e8!important}html.dark #statExpenses{color:#ff7b7b!important}html.dark #statCaisse{color:#a3e635!important}html.dark #calcTile strong{color:#cbd5e1!important}
+html.dark .btn2,html.dark .themeBtn,html.dark header .logout{background:#22342b;color:#cfe8da}
+html.dark .btnred{background:#3a2222;color:#ff9b9b}
+html.dark .btnblue{background:#1f2c47;color:#9bbcff}
+html.dark .nav button{background:#1d3328;color:#9fe0c2}
+html.dark .nav button.active{background:var(--green);color:#fff}
+html.dark .badge{background:#22342b;color:#a9dcc2}
+html.dark .dgroup{background:#1d3328;color:#8fd9b6}html.dark .dgroup.late{background:#3a2020;color:#ff9a9a}
+html.dark #presenceBar{border-top-color:#26342b}
+html.dark #dashTomorrow{border-top-color:#2d3d33}html.dark #dashTomorrow .dtHead{color:#8fd9b6}html.dark #dashTomorrow .dtRow{color:var(--ink);border-bottom-color:#26342b}html.dark #dashTomorrow .dtRow span{color:#a8b9ae}
+html.dark #history>.card>.section-title,html.dark #proforma>.card>.section-title{background:var(--card)}
+html.dark #loginScreen{background:linear-gradient(145deg,#0e1511,#16231b)}
+html.dark .login-card h1{color:var(--ink)}
+html.dark body.booting #bootSplash,html.dark #bootSplash{background:#0e1511}
+html.dark #app [style*="color:#1d2923"]{color:var(--ink)!important}
+html.dark #app [style*="color:#075b3d"]{color:#8fd9b6!important}
+html.dark #app [style*="background:#f3f6f4"],html.dark #app [style*="background:#eaf5ef"],html.dark #app [style*="background:#eceeed"]{background:#1d3328!important;color:var(--ink)}
+html.dark #app [style*="background:#d9f3e4"]{background:#1f3a2e!important;color:#8fd9b6!important}
+html.dark a[style*="2454b5"]{color:#8db4ff!important}
+/* La facture, le rapport et la fenêtre facture restent en "papier" clair */
+html.dark .invoice,html.dark .modal-box,html.dark .pinv{--green:#087b50;--green2:#075b3d;--pale:#eaf5ef;--bg:#f3f6f4;--ink:#1d2923;--muted:#718078;--line:#e5ece7;color:#1d2923}
+html.dark .pinv{background:#fff;border-radius:12px;padding:12px}
+html.dark .modal-box{background:#fff}
+html.dark .modal-box .btn2{background:#eaf2ed;color:#24543e}
+html.dark .modal-box input,html.dark .modal-box select,html.dark .modal-box textarea{background:#fff;color:#1d2923;border-color:#dce5df}
+html.dark body.print-invoice,html.dark body.print-report{background:#fff}
 </style>
 </head>
 <body class="booting">
 <div id="bootSplash"><div style="text-align:center"><img src="icon-512.png" alt="" style="width:84px;height:84px;object-fit:contain"><p style="margin:10px 0 0">Chargement…</p></div></div>
 <div id="toast"></div>
 <script>function logoFb(i){if(!i.dataset.f){i.dataset.f=1;i.src="logo.png"}else{i.onerror=null;i.src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23087b50'/><text x='50' y='62' font-size='36' font-weight='700' text-anchor='middle' fill='white' font-family='Georgia,serif'>MS</text></svg>"}}</script>
-<section id="loginScreen">
+<section id="loginScreen"><button class="themeBtn" type="button" aria-label="Mode sombre / clair" style="position:fixed;top:12px;right:12px;z-index:3">🌙</button>
  <div class="card login-card">
   <img src="icon-512.png" onerror="logoFb(this)" alt="Logo MADA SHOP">
   <h1><span class="shop-green">MADA</span> <span class="shop-red">SHOP</span></h1><p style="font-weight:700;color:var(--green);margin:0 0 2px;font-size:16px">Bienvenue 👋</p><p class="muted">Connectez-vous pour accéder à votre espace de gestion de vente</p>
@@ -250,7 +293,7 @@ body.role-livreur #newDeliveryBtn{display:none!important}
  </div>
 </section>
 <div id="app" class="hidden">
-<header><img src="icon-512.png" onerror="logoFb(this)" alt="Logo" style="object-fit:contain"><div style="flex:1"><h2 id="headerShopName"><span class="shop-green">MADA</span> <span class="shop-red">SHOP</span></h2><small id="userInfo"></small></div><button class="logout" id="logoutBtn">Déconnexion</button></header>
+<header><img src="icon-512.png" onerror="logoFb(this)" alt="Logo" style="object-fit:contain"><div style="flex:1"><h2 id="headerShopName"><span class="shop-green">MADA</span> <span class="shop-red">SHOP</span></h2><small id="userInfo"></small></div><button class="themeBtn" type="button" aria-label="Mode sombre / clair">🌙</button><button class="logout" id="logoutBtn">Déconnexion</button></header>
 <main class="container">
 <section id="dashboard" class="page active">
  <div id="welcomeBanner" style="display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#087b50,#075b3d);color:#fff;padding:14px;border-radius:14px;margin-bottom:12px"></div>
@@ -602,7 +645,7 @@ function backup(){if(!isAdmin())return;let data={products,sales,clients,expenses
 function restore(file){if(!isAdmin()){notify("Action réservée à Admin");return}let r=new FileReader();r.onload=()=>{let d;try{d=JSON.parse(r.result)}catch(e){notify("Fichier de sauvegarde invalide");return}applyBackup(d)};r.readAsText(file)}
 async function applyBackup(d){if(!isAdmin()){notify("Action réservée à Admin");return}try{if(!d||!Array.isArray(d.products)||!Array.isArray(d.sales))throw Error("invalid");if(!confirm("Remplacer toutes les données actuelles par ces données ?"))return;products=d.products;sales=d.sales;clients=Array.isArray(d.clients)?d.clients:[];expenses=Array.isArray(d.expenses)?d.expenses:[];settings=d.settings||{shopName:"MADA SHOP",phone:"",address:""};products.forEach(p=>stockForce.add(String(p.id)));write("madaProducts",products);write("madaSales",sales);write("madaClients",clients);write("madaExpenses",expenses);write("madaSettings",settings);let ok=0,bad=0;for(const v of(Array.isArray(d.vendors)?d.vendors:[])){const code=String(v.accessCode||v.password||""),un=String(v.username||"").toLowerCase();if(!/^[a-z0-9._-]{3,30}$/.test(un)||code.length<6||un==="admin"){bad++;continue}try{const uid=await provisionVendor(un,code,true);await cloudDb.collection("users").doc(uid).set({name:v.name||un,phone:v.phone||"",email:v.email||"",username:un,accessCode:code,active:v.active!==false});ok++}catch(e){console.error(e);bad++}}refreshAll();notify("Données restaurées : "+products.length+" produits, "+sales.length+" ventes"+(ok||bad?" • vendeurs : "+ok+" ok"+(bad?", "+bad+" à recréer":""):""))}catch(e){console.error(e);notify("Données invalides")}}
 async function migrateOld(){if(!isAdmin())return;const keys={products:"madaProducts",sales:"madaSales",clients:"madaClients",expenses:"madaExpenses",vendors:"madaVendors",settings:"madaSettings"},d={},src={};try{for(const n in keys){let v=null;try{const doc=await cloudDb.collection("mada").doc(keys[n]).get();if(doc.exists){v=JSON.parse(doc.data().data);src[n]="cloud"}}catch(e){if(e.code==="permission-denied"){notify("Accès refusé : ajoutez la règle « mada » dans Firestore (Publish)");return}}if(v===null){try{const l=localStorage.getItem(keys[n]);if(l!==null){v=JSON.parse(l);src[n]="local"}}catch(_){}}d[n]=v}}catch(e){console.error(e);notify("Erreur de lecture des anciennes données");return}if(!Array.isArray(d.products)&&!Array.isArray(d.sales)){notify("Aucune ancienne donnée trouvée");return}d.products=d.products||[];d.sales=d.sales||[];if(!confirm("Anciennes données trouvées : "+d.products.length+" produits, "+d.sales.length+" ventes, "+(d.clients||[]).length+" clients, "+(d.expenses||[]).length+" dépenses, "+(d.vendors||[]).length+" vendeurs. Les importer ?"))return;applyBackup(d)}
-$("loginBtn").addEventListener("click",login);$("loginRole").addEventListener("change",updateLoginRole);$("loginPass").addEventListener("keydown",e=>{if(e.key==="Enter")login()});$("logoutBtn").addEventListener("click",logout);
+$("loginBtn").addEventListener("click",login);$("loginRole").addEventListener("change",updateLoginRole);$("loginPass").addEventListener("keydown",e=>{if(e.key==="Enter")login()});$("logoutBtn").addEventListener("click",logout);function applyTheme(t){const d=t==="dark";document.documentElement.classList.toggle("dark",d);document.querySelectorAll(".themeBtn").forEach(b=>{b.textContent=d?"☀️":"🌙";b.title=d?"Passer en mode clair":"Passer en mode sombre"});try{localStorage.setItem("madaTheme",d?"dark":"light")}catch(e){}}document.querySelectorAll(".themeBtn").forEach(b=>b.addEventListener("click",()=>applyTheme(document.documentElement.classList.contains("dark")?"light":"dark")));applyTheme(document.documentElement.classList.contains("dark")?"dark":"light");
 $("navigation").addEventListener("click",e=>{let b=e.target.closest("button[data-page]");if(b)showPage(b.dataset.page)});
 $("saveProductBtn").addEventListener("click",saveProduct);$("cancelProductBtn").addEventListener("click",cancelProductEdit);$("newProductBtn").addEventListener("click",openProductForm);$("pHasStock").addEventListener("change",()=>$("stockField").classList.toggle("hidden",$("pHasStock").value==="no"));$("productSearch").addEventListener("input",renderProducts);
 $("addClientBtn").addEventListener("click",addClient);$("newClientBtn").addEventListener("click",openClientForm);$("cancelClientBtn").addEventListener("click",closeClientForm);$("clientSearch").addEventListener("input",renderClients);$("saleProduct").addEventListener("change",fillSalePrice);$("addCartBtn").addEventListener("click",addCartItem);$("reception").addEventListener("change",()=>{$("deliveryBox").classList.toggle("hidden",$("reception").value!=="Livraison");updateDateLabel();renderCart()});$("deliveryFee").addEventListener("input",renderCart);$("discount").addEventListener("input",renderCart);$("discountType").addEventListener("change",renderCart);$("saveSaleBtn").addEventListener("click",saveSale);$("docType").addEventListener("change",togglePay);$("historySearch").addEventListener("input",renderHistory);$("proformaSearch").addEventListener("input",renderHistory);$("newInvoiceBtn").addEventListener("click",()=>{showPage("sales");$("docType").value="Facture";togglePay()});$("newDeliveryBtn").addEventListener("click",()=>openDeliveryForm());$("dlSave").addEventListener("click",saveDelivery);$("dlAddLine").addEventListener("click",()=>addDlLine());$("dlMode").addEventListener("change",applyDlMode);$("dlFee").addEventListener("input",updateDlTotal);$("dlPhoto").addEventListener("change",pickDlPhoto);$("dlCancel").addEventListener("click",closeDeliveryForm);$("delFilter").addEventListener("change",renderDeliveries);$("newProformaBtn").addEventListener("click",()=>{showPage("sales");$("docType").value="Proforma";togglePay()});
