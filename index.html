@@ -61,7 +61,8 @@ header .logout{margin-left:auto;padding:9px 11px;background:#edf3ef;color:#36534
 .invoice{color:#242b27;background:#fff;padding:15px;font-family:Arial,Helvetica,sans-serif;width:100%;max-width:760px;margin:auto;border:1px solid #e1e6e2}
 .invoice h2{color:#344c40;margin:0 0 6px}.invoice .inv-top{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;border-bottom:1.5px solid #9eaaa2;padding-bottom:10px}
 .invoice .inv-brand{font-size:21px;font-weight:800;letter-spacing:.3px;color:#344c40}
-.shop-red{color:#d62828!important}.invoice .inv-meta{text-align:right}
+.shop-red{color:#d62828!important}
+.shop-green{color:#3ab54a!important}.invoice .inv-meta{text-align:right}
 .invoice .inv-label{font-size:16px;letter-spacing:1.1px;color:#344c40;font-weight:800}
 .invoice .inv-no{font-size:9px;font-weight:600;color:#59645d;margin:2px 0;letter-spacing:.1px;overflow-wrap:anywhere}
 .invoice .inv-details{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
@@ -234,7 +235,7 @@ body.role-livreur #newDeliveryBtn{display:none!important}
 <section id="loginScreen">
  <div class="card login-card">
   <img src="icon-512.png" onerror="logoFb(this)" alt="Logo MADA SHOP">
-  <h1>MADA <span class="shop-red">SHOP</span></h1><p style="font-weight:700;color:var(--green);margin:0 0 2px;font-size:16px">Bienvenue 👋</p><p class="muted">Connectez-vous pour accéder à votre espace de gestion de vente</p>
+  <h1><span class="shop-green">MADA</span> <span class="shop-red">SHOP</span></h1><p style="font-weight:700;color:var(--green);margin:0 0 2px;font-size:16px">Bienvenue 👋</p><p class="muted">Connectez-vous pour accéder à votre espace de gestion de vente</p>
   <label for="loginRole" style="text-align:left">Type de compte</label>
   <select id="loginRole" style="font-weight:700">
    <option value="admin">ADMIN</option>
@@ -247,7 +248,7 @@ body.role-livreur #newDeliveryBtn{display:none!important}
  </div>
 </section>
 <div id="app" class="hidden">
-<header><img src="icon-512.png" onerror="logoFb(this)" alt="Logo" style="object-fit:contain"><div style="flex:1"><h2 id="headerShopName">MADA <span class="shop-red">SHOP</span></h2><small id="userInfo"></small></div><button class="logout" id="logoutBtn">Déconnexion</button></header>
+<header><img src="icon-512.png" onerror="logoFb(this)" alt="Logo" style="object-fit:contain"><div style="flex:1"><h2 id="headerShopName"><span class="shop-green">MADA</span> <span class="shop-red">SHOP</span></h2><small id="userInfo"></small></div><button class="logout" id="logoutBtn">Déconnexion</button></header>
 <main class="container">
 <section id="dashboard" class="page active">
  <div id="welcomeBanner" style="display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#087b50,#075b3d);color:#fff;padding:14px;border-radius:14px;margin-bottom:12px"></div>
@@ -368,7 +369,8 @@ function money(n){return (Number(n)||0).toLocaleString("fr-FR")+" Ar"}
 function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function notify(m){const t=$("toast");t.textContent=m;t.style.display="block";clearTimeout(notify.timer);notify.timer=setTimeout(()=>t.style.display="none",2500)}
 function doPrint(cls,page,title){const st=document.getElementById("pageStyle")||document.head.appendChild(Object.assign(document.createElement("style"),{id:"pageStyle"}));st.textContent="@page{size:"+page+";margin:12mm}";const old=document.title;document.body.classList.add(cls);if(title)document.title=title;let done=()=>{document.body.classList.remove(cls);document.title=old;window.removeEventListener("afterprint",done)};window.addEventListener("afterprint",done);setTimeout(()=>window.print(),80)}
-function brandHtml(n){return esc(String(n==null?"":n)).replace(/\bshop\b/gi,m=>'<span class="shop-red">'+m+'</span>')}
+function brandHtml(n){return esc(String(n==null?"":n)).replace(/\b(mada|shop)\b/gi,m=>'<span class="'+(/^mada$/i.test(m)?'shop-green':'shop-red')+'">'+m+'</span>')}
+function brandWhite(n){return '<b style="color:#fff;font-weight:800">'+esc(String(n==null?"":n))+'</b>'}
 function adminUser(){return{username:"admin",name:(settings.adminName||"").trim()||"Administrateur",phone:settings.adminPhone||"",email:settings.adminEmail||"",role:"admin"}}
 function isAdmin(){return currentUser?.role==="admin"} function isLivreur(){return currentUser?.role==="livreur"}
 function visibleSales(){return sales}
@@ -494,7 +496,7 @@ function pdfBuild(s){
  const H=842,G="0.03 0.48 0.31",GR="0.45 0.49 0.47",INK="0.1 0.15 0.12",W="1 1 1";
  let pages=[],ops="",y=0;
  const txt=(t,x,yy,sz,bold,c,al)=>{t=T(t);let w=t.length*sz*(bold?.56:.5);if(al==="r")x-=w;if(al==="c")x-=w/2;ops+=`BT /${bold?"F2":"F1"} ${sz} Tf ${c||INK} rg ${x.toFixed(1)} ${(H-yy).toFixed(1)} Td (${E(t)}) Tj ET\n`};
-const txtBrand=(t,x,yy,sz,bold,c,al)=>{t=T(t);const parts=t.split(/(\bshop\b)/i).filter(q=>q!==""),wd=q=>q.length*sz*(bold?.56:.5),tot=parts.reduce((a,q)=>a+wd(q),0);if(al==="c")x-=tot/2;parts.forEach(q=>{txt(q,x,yy,sz,bold,/^shop$/i.test(q)?"0.84 0.16 0.16":c);x+=wd(q)})};
+const txtBrand=(t,x,yy,sz,bold,c,al)=>{t=T(t);const parts=t.split(/(\b(?:mada|shop)\b)/i).filter(q=>q!==""),wd=q=>q.length*sz*(bold?.56:.5),tot=parts.reduce((a,q)=>a+wd(q),0);if(al==="c")x-=tot/2;parts.forEach(q=>{txt(q,x,yy,sz,bold,/^shop$/i.test(q)?"0.84 0.16 0.16":/^mada$/i.test(q)?"0.227 0.71 0.29":c);x+=wd(q)})};
  const rect=(x,yy,w,h,c)=>{ops+=`${c} rg ${x} ${H-yy-h} ${w} ${h} re f\n`};
  const line=(x1,yy,x2,c,wd)=>{ops+=`${c} RG ${wd||1} w ${x1} ${H-yy} m ${x2} ${H-yy} l S\n`};
  const wrap=(t,n)=>{let out=[],cur="";String(t||"").split(/\s+/).forEach(w=>{if((cur+" "+w).trim().length>n&&cur){out.push(cur);cur=w}else cur=(cur+" "+w).trim()});if(cur)out.push(cur);return out.length?out:[""]};
@@ -627,7 +629,7 @@ async function handleAuthInner(user){const my=++authSeq,fresh=freshLogin,selRole
 function showRetry(){retryShown=true;const sp=document.getElementById("bootSplash");document.body.classList.add("booting");if(sp)sp.innerHTML='<div style="text-align:center;padding:20px"><img src="icon-512.png" alt="" style="width:84px;height:84px;object-fit:contain"><p style="margin:10px 0 14px">Connexion lente ou indisponible…</p><button onclick="location.reload()">Réessayer</button></div>'}
 function authStart(){setTimeout(()=>{if(document.body.classList.contains("booting"))showRetry()},12000);if(typeof firebase==="undefined"){cloudBadge("Service indisponible","#c73535");return}try{firebase.initializeApp(FIREBASE_CONFIG);auth=firebase.auth();cloudDb=firebase.firestore();cloudDb.enablePersistence({synchronizeTabs:true}).catch(()=>{})}catch(e){console.error(e);cloudBadge("⚠ Configuration Firebase invalide","#c73535");return}cloudBadge("Connexion…","#2563eb");auth.onAuthStateChanged(handleAuth)}
 function cloudApply(){if(window.__printing||document.body.classList.contains("print-invoice")||document.body.classList.contains("print-report")){clearTimeout(cloudApply.p);cloudApply.p=setTimeout(cloudApply,3000);return}const keep=document.activeElement;if(keep&&/^(INPUT|SELECT|TEXTAREA)$/.test(keep.tagName)&&currentUser){clearTimeout(cloudApply.t);cloudApply.t=setTimeout(cloudApply,2500);return}if(!currentUser)return;if(isAdmin()){currentUser=adminUser();$("userInfo").textContent=currentUser.name+" • ADMIN"}$("headerShopName").innerHTML=brandHtml(settings.shopName||"MADA SHOP");welcomeBanner();refreshAll()}
-function welcomeBanner(){if(!currentUser)return;let h=new Date().getHours(),g=h<18?"Bonjour":"Bonsoir",b=document.getElementById("welcomeBanner");if(b)b.innerHTML=`<img src="icon-512.png" alt="" onerror="logoFb(this)" style="width:46px;height:46px;object-fit:contain;border-radius:12px;background:#fff;padding:3px"><div><strong style="font-size:16px">${g}, ${esc(currentUser.name)} 👋</strong><div style="font-size:13px;opacity:.9">Bienvenue sur ${brandHtml(settings.shopName||"MADA SHOP")} • ${isAdmin()?"Espace Admin":isLivreur()?"Espace Livreur":"Espace Vendeur"}</div></div>`}
+function welcomeBanner(){if(!currentUser)return;let h=new Date().getHours(),g=h<18?"Bonjour":"Bonsoir",b=document.getElementById("welcomeBanner");if(b)b.innerHTML=`<img src="icon-512.png" alt="" onerror="logoFb(this)" style="width:46px;height:46px;object-fit:contain;border-radius:12px;background:#fff;padding:3px"><div><strong style="font-size:16px">${g}, ${esc(currentUser.name)} 👋</strong><div style="font-size:13px;opacity:.9">Bienvenue sur ${brandWhite(settings.shopName||"MADA SHOP")} • ${isAdmin()?"Espace Admin":isLivreur()?"Espace Livreur":"Espace Vendeur"}</div></div>`}
 function welcomeUI(){welcomeBanner();notify("Bienvenue "+currentUser.name+" 👋")}
 function isDoc(s){return (s.docType||"Facture")!=="Facture"}
 function docLabel(s){return s.docType||"Facture"}
@@ -810,7 +812,7 @@ function archivePdf(k,share){if(!isAdmin()){notify("Action réservée à Admin")
  const E=t=>T(t).replace(/([\\()])/g,"\\$1"),H=842,G="0.03 0.48 0.31",GR="0.45 0.49 0.47",INK="0.1 0.15 0.12",W="1 1 1";
  let pages=[],ops="",y=0;
  const txt=(t,x,yy,sz,bold,c,al)=>{t=T(t);let w=t.length*sz*(bold?.56:.5);if(al==="r")x-=w;if(al==="c")x-=w/2;ops+=`BT /${bold?"F2":"F1"} ${sz} Tf ${c||INK} rg ${x.toFixed(1)} ${(H-yy).toFixed(1)} Td (${E(t)}) Tj ET\n`};
-const txtBrand=(t,x,yy,sz,bold,c,al)=>{t=T(t);const parts=t.split(/(\bshop\b)/i).filter(q=>q!==""),wd=q=>q.length*sz*(bold?.56:.5),tot=parts.reduce((a,q)=>a+wd(q),0);if(al==="c")x-=tot/2;parts.forEach(q=>{txt(q,x,yy,sz,bold,/^shop$/i.test(q)?"0.84 0.16 0.16":c);x+=wd(q)})};
+const txtBrand=(t,x,yy,sz,bold,c,al)=>{t=T(t);const parts=t.split(/(\b(?:mada|shop)\b)/i).filter(q=>q!==""),wd=q=>q.length*sz*(bold?.56:.5),tot=parts.reduce((a,q)=>a+wd(q),0);if(al==="c")x-=tot/2;parts.forEach(q=>{txt(q,x,yy,sz,bold,/^shop$/i.test(q)?"0.84 0.16 0.16":/^mada$/i.test(q)?"0.227 0.71 0.29":c);x+=wd(q)})};
  const rect=(x,yy,w,h,c)=>{ops+=`${c} rg ${x} ${H-yy-h} ${w} ${h} re f\n`};
  const line=(x1,yy,x2,c,wd)=>{ops+=`${c} RG ${wd||1} w ${x1} ${H-yy} m ${x2} ${H-yy} l S\n`};
  const tr=(t,n)=>{t=T(t);return t.length>n?t.slice(0,n-2)+"..":t};
