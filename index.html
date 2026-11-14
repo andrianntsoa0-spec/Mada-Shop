@@ -214,6 +214,7 @@ body{padding-bottom:225px}
 body{padding-bottom:calc(225px + var(--pbh,0px))!important}
 @media print{.nav,#presenceBar{display:none!important}body{padding-bottom:0!important}}
 .kb-hide{display:none!important}
+body.kb-nav-off .nav,body.kb-nav-off nav,body.kb-nav-off #presenceBar{display:none!important}
 body.kb-on main{padding-bottom:calc(var(--kbh,0px) + 16px)!important}
 #dashTomorrow{margin-top:12px;padding-top:12px}#dashTomorrow .dtHead{font-size:13px;margin-bottom:6px}#dashTomorrow .dtRow{font-size:12.5px;padding:8px 0;border-bottom:1px solid #eef2ef}#dashTomorrow .dtMore{font-size:12px;padding-top:8px;font-weight:600;color:#087b50}
 html:has(#dashboard.active),body:has(#dashboard.active){overflow:hidden!important;overscroll-behavior:none;height:100%}
@@ -705,12 +706,12 @@ if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.se
 (function(){
 if(!window.matchMedia||!matchMedia("(pointer:coarse)").matches)return;
 const TXT=/^(text|search|number|tel|email|password|url)$/i;
-let cont=null,hid=[];
+let cont=null,hid=[],baseH=Math.max(innerHeight,(window.visualViewport&&visualViewport.height)||0),kbSeen=false;
 const isTxt=e=>!!(e&&e.closest&&e.closest(".page")&&((e.tagName==="INPUT"&&TXT.test(e.type||"text"))||e.tagName==="TEXTAREA"));
 const hide=n=>{if(n.nodeType===1&&!n.matches("script,style")&&!n.classList.contains("kb-hide")){n.classList.add("kb-hide");hid.push(n)}};
 function kbh(){const v=window.visualViewport;document.documentElement.style.setProperty("--kbh",(v?Math.max(0,Math.round(innerHeight-v.height-v.offsetTop)):0)+"px")}
 if(window.visualViewport)visualViewport.addEventListener("resize",kbh);
-function exit(){hid.forEach(n=>n.classList.remove("kb-hide"));hid=[];cont=null;document.body.classList.remove("kb-on")}
+function exit(){hid.forEach(n=>n.classList.remove("kb-hide"));hid=[];cont=null;kbSeen=false;document.body.classList.remove("kb-on")}
 function top(){if(!cont)return;const h=document.querySelector("header");let m=8;if(h){const p=getComputedStyle(h).position;if(p==="sticky"||p==="fixed")m+=h.offsetHeight}const v=window.visualViewport,vt=v?v.offsetTop:0,vh=v?v.height:innerHeight,a=document.activeElement;if(a&&a!==cont&&cont.contains(a)&&isTxt(a)&&cont.offsetHeight>vh*.8){const r=a.getBoundingClientRect();if(r.top<vt+m+10||r.bottom>vt+vh-16)window.scrollBy(0,r.top-(vt+m+70));return}cont.style.scrollMarginTop=m+"px";cont.scrollIntoView({block:"start"})}
 function enter(el){
  const c=el.closest("#deliveryForm,.card");if(!c)return;
@@ -728,8 +729,10 @@ document.addEventListener("focusout",e=>{
  setTimeout(()=>{const a=document.activeElement;if(cont&&!isTxt(a)&&!(a&&a!==document.body&&cont.contains(a)))exit()},200)});
 document.addEventListener("click",e=>{if(cont&&e.target.closest&&cont.contains(e.target)&&e.target.closest("button"))setTimeout(()=>{if(!isTxt(document.activeElement))exit()},350)},true);
 if(window.visualViewport)visualViewport.addEventListener("resize",()=>{
- if(cont&&visualViewport.height<=innerHeight*.9)setTimeout(top,60);
- if(cont&&visualViewport.height>innerHeight*.9)setTimeout(()=>{if(cont&&visualViewport.height>innerHeight*.9){try{document.activeElement.blur()}catch(_){}exit()}},150)});
+ const h=visualViewport.height;
+ if(!cont){baseH=Math.max(h,innerHeight);kbSeen=false;return}
+ if(h<baseH*.85){kbSeen=true;return}
+ if(kbSeen&&h>baseH*.92)setTimeout(()=>{if(cont&&kbSeen&&visualViewport.height>baseH*.92){kbSeen=false;try{document.activeElement.blur()}catch(_){}exit()}},300)});
 })();
 </script>
 <script>
@@ -851,6 +854,14 @@ function archivePdf(k,share){if(!isAdmin()){notify("Action réservée à Admin")
  const a=document.createElement("a");a.href=URL.createObjectURL(file);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);notify("PDF enregistré : "+name)
 }catch(e){console.error(e);notify("Erreur PDF")}}
 (function(){const r=window.renderDashboard;window.renderDashboard=function(){const x=r.apply(this,arguments);try{archiveInfo()}catch(_){}return x}})();
+</script>
+<script>
+/* Menu du bas masqué pendant la saisie (il ne monte plus avec le clavier) */
+(function(){if(!window.matchMedia||!matchMedia("(pointer:coarse)").matches)return;
+const TXT=/^(text|search|number|tel|email|password|url)$/i,isT=e=>!!e&&((e.tagName==="INPUT"&&TXT.test(e.type||"text"))||e.tagName==="TEXTAREA");let t=null;
+document.addEventListener("focusin",e=>{if(isT(e.target)){clearTimeout(t);document.body.classList.add("kb-nav-off")}});
+document.addEventListener("focusout",()=>{clearTimeout(t);t=setTimeout(()=>{if(!isT(document.activeElement))document.body.classList.remove("kb-nav-off")},250)});
+})();
 </script>
 </body>
 </html>
