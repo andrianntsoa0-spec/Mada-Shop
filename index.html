@@ -775,7 +775,77 @@ function archDate(ms){return ms?new Date(ms).toLocaleDateString("fr-FR",{day:"2-
 function archiveInfo(){const e=document.getElementById("archInfo");if(!e)return;const f=Number(settings.archiveFromMs||0);const n=f?sales.filter(x=>!x.cancelled&&!isDoc(x)&&effMs(x)===Infinity).length:0;e.textContent=(f?"Chiffres comptés depuis le "+archDate(f):"Aucune archive : tous les chiffres sont comptés.")+(n?" • "+n+" commande(s) pas encore payée(s) restent comptée(s)":"")}
 function archiveStats(){if(!isAdmin()){notify("Action réservée à Admin");return}const from=Number(settings.archiveFromMs||0),st=archStats(from,Date.now()),openN=sales.filter(x=>!x.cancelled&&!isDoc(x)&&effMs(x)===Infinity).length;if(!confirm("Archiver les chiffres ?\n\nChiffre d'affaires, total ventes, encaissé, commandes, dépenses et caisse repartent à 0.\nFactures, clients, produits et stock ne sont PAS supprimés.\nLes commandes pas encore payées restent comptées (" + openN + " en cours).\nLa liste Livraison n'est pas touchée.\nVous pourrez revoir cette période dans « Voir les archives ».\n\nPériode archivée : "+money(st.total)+" • "+st.count+" commande(s)"))return;const now=Date.now();settings.archives=(settings.archives||[]).concat([{id:now,from,to:now,by:(currentUser&&currentUser.name)||""}]);settings.archiveFromMs=now;write("madaSettings",settings);renderDashboard();archiveInfo();notify("Chiffres archivés")}
 function undoArchive(){if(!isAdmin())return;const a=settings.archives||[];if(!a.length)return;if(!confirm("Annuler la dernière archive ? Ses chiffres seront de nouveau comptés dans le tableau de bord."))return;const last=a[a.length-1];settings.archives=a.slice(0,-1);if(last.from)settings.archiveFromMs=last.from;else delete settings.archiveFromMs;write("madaSettings",settings);renderDashboard();archiveInfo();const o=document.getElementById("archModal");if(o)o.remove();notify("Archive annulée")}
-function showArchives(){const old=document.getElementById("archModal");if(old)old.remove();const a=(settings.archives||[]).slice().reverse(),cur=Number(settings.archiveFromMs||0),c=archStats(cur,0);const row=(t,f,to,st)=>`<div style="border:1px solid #dbe6df;border-radius:12px;padding:10px;margin-top:8px"><strong>${t}</strong><div class="muted">${esc(archDate(f))} → ${to?esc(archDate(to)):"maintenant"}</div><div class="row" style="margin-top:4px"><span>Total ventes</span><strong>${money(st.total)}</strong></div><div class="row"><span>Encaissé</span><strong>${money(st.cash)}</strong></div><div class="row"><span>Commandes</span><strong>${st.count}</strong></div><div class="row"><span>Dépenses</span><strong>${money(st.spent)}</strong></div><div class="row"><span>Caisse</span><strong>${money(st.caisse)}</strong></div></div>`;const o=document.createElement("div");o.id="archModal";o.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:330;display:grid;place-items:center;padding:16px;overflow:auto";o.innerHTML=`<div style="background:#fff;color:#1d2923;border-radius:16px;padding:18px;width:min(100%,380px);max-height:88vh;overflow:auto;box-shadow:0 10px 40px #0005"><h3 style="margin:0 0 4px">Archives</h3>${row("Période en cours",cur,0,c)}${a.map((x,i)=>row("Archive "+(a.length-i),x.from,x.to,archStats(x.from,x.to))).join("")||'<p class="muted">Aucune archive pour le moment.</p>'}${a.length?'<button type="button" class="btnred" style="width:100%;margin-top:12px" id="archUndo">Annuler la dernière archive</button>':""}<button type="button" class="btn2" style="width:100%;margin-top:8px" id="archClose">Fermer</button></div>`;document.body.appendChild(o);document.getElementById("archClose").onclick=()=>o.remove();o.addEventListener("click",e=>{if(e.target===o)o.remove()});const u=document.getElementById("archUndo");if(u)u.onclick=undoArchive}
+function showArchives(){const old=document.getElementById("archModal");if(old)old.remove();const a=(settings.archives||[]).slice().reverse(),cur=Number(settings.archiveFromMs||0),c=archStats(cur,0);const row=(t,f,to,st,k)=>`<div style="border:1px solid #dbe6df;border-radius:12px;padding:10px;margin-top:8px"><strong>${t}</strong><div class="muted">${esc(archDate(f))} → ${to?esc(archDate(to)):"maintenant"}</div><div class="row" style="margin-top:4px"><span>Total ventes</span><strong>${money(st.total)}</strong></div><div class="row"><span>Encaissé</span><strong>${money(st.cash)}</strong></div><div class="row"><span>Commandes</span><strong>${st.count}</strong></div><div class="row"><span>Dépenses</span><strong>${money(st.spent)}</strong></div><div class="row"><span>Caisse</span><strong>${money(st.caisse)}</strong></div><div style="display:flex;gap:6px;margin-top:8px"><button type="button" class="btn2 small" style="flex:1" onclick="archivePdf(${k})">⬇ PDF détaillé</button><button type="button" class="btn2 small" style="flex:1" onclick="archivePdf(${k},true)">↗ Partager</button></div></div>`;const o=document.createElement("div");o.id="archModal";o.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:330;display:grid;place-items:center;padding:16px;overflow:auto";o.innerHTML=`<div style="background:#fff;color:#1d2923;border-radius:16px;padding:18px;width:min(100%,380px);max-height:88vh;overflow:auto;box-shadow:0 10px 40px #0005"><h3 style="margin:0 0 4px">Archives</h3>${row("Période en cours",cur,0,c,-1)}${a.map((x,i)=>row("Archive "+(a.length-i),x.from,x.to,archStats(x.from,x.to),a.length-1-i)).join("")||'<p class="muted">Aucune archive pour le moment.</p>'}${a.length?'<button type="button" class="btnred" style="width:100%;margin-top:12px" id="archUndo">Annuler la dernière archive</button>':""}<button type="button" class="btn2" style="width:100%;margin-top:8px" id="archClose">Fermer</button></div>`;document.body.appendChild(o);document.getElementById("archClose").onclick=()=>o.remove();o.addEventListener("click",e=>{if(e.target===o)o.remove()});const u=document.getElementById("archUndo");if(u)u.onclick=undoArchive}
+function archivePdf(k,share){try{
+ const ar=settings.archives||[];let from,to,label;
+ if(k<0){from=Number(settings.archiveFromMs||0);to=0;label="Période en cours"}else{const x=ar[k];if(!x){notify("Archive introuvable");return}from=Number(x.from||0);to=Number(x.to||0);label="Archive "+(k+1)}
+ const prev=k<0?(ar.length?ar[ar.length-1]:null):(k>0?ar[k-1]:null),prevLabel=prev?"Archive "+(k<0?ar.length:k):"";
+ const ok=x=>{if(x.cancelled)return false;const t=effMs(x);return t>=from&&(!to||t<to)};
+ const L=sales.filter(x=>ok(x)&&!isDoc(x)),M=sales.filter(x=>ok(x)&&x.docType==="Livraison"&&Number(x.paid||0)>0);
+ const amt=x=>x.docType==="Livraison"?cashIn(x):saleTotal(x);
+ const rows=L.concat(M).sort((p,q)=>new Date(p.date)-new Date(q.date));
+ const st=archStats(from,to),pst=prev?archStats(Number(prev.from||0),Number(prev.to||0)):null;
+ const exps=expenses.filter(e=>{const t=expMs(e);return Number.isNaN(t)?from<=0:t>=from&&(!to||t<to)}).sort((p,q)=>String(p.date).localeCompare(String(q.date)));
+ const prod={};
+ L.forEach(s=>getItems(s).forEach(x=>{const n=String(x.productName||"Article").trim()||"Article",o=prod[n]||(prod[n]={q:0,t:0});o.q+=Number(x.qty||0);o.t+=Number(x.subtotal??x.qty*x.price)||0}));
+ M.forEach(s=>dlLinesOf(s).forEach(l=>{const n=String(l.name||"Article").trim()||"Article",o=prod[n]||(prod[n]={q:0,t:0});o.q+=Number(l.qty||0);o.t+=Number(l.total??l.qty*l.price)||0}));
+ const prodL=Object.entries(prod).sort((a,b)=>b[1].t-a[1].t),prodT=prodL.reduce((a,x)=>a+x[1].t,0),qtyT=prodL.reduce((a,x)=>a+x[1].q,0);
+ const day={},sel={};
+ rows.forEach(s=>{const d=saleDateKey(s),o=day[d]||(day[d]={n:0,t:0});o.n++;o.t+=amt(s);const v=String(s.sellerName||s.sellerUsername||"-"),w=sel[v]||(sel[v]={n:0,t:0});w.n++;w.t+=amt(s)});
+ const T=t=>String(t??"").replace(/[\u202f\u00a0]/g," ").replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/[–—]/g,"-").replace(/[^\x20-\xff]/g,"?");
+ const E=t=>T(t).replace(/([\\()])/g,"\\$1"),H=842,G="0.03 0.48 0.31",GR="0.45 0.49 0.47",INK="0.1 0.15 0.12",W="1 1 1";
+ let pages=[],ops="",y=0;
+ const txt=(t,x,yy,sz,bold,c,al)=>{t=T(t);let w=t.length*sz*(bold?.56:.5);if(al==="r")x-=w;if(al==="c")x-=w/2;ops+=`BT /${bold?"F2":"F1"} ${sz} Tf ${c||INK} rg ${x.toFixed(1)} ${(H-yy).toFixed(1)} Td (${E(t)}) Tj ET\n`};
+ const rect=(x,yy,w,h,c)=>{ops+=`${c} rg ${x} ${H-yy-h} ${w} ${h} re f\n`};
+ const line=(x1,yy,x2,c,wd)=>{ops+=`${c} RG ${wd||1} w ${x1} ${H-yy} m ${x2} ${H-yy} l S\n`};
+ const tr=(t,n)=>{t=T(t);return t.length>n?t.slice(0,n-2)+"..":t};
+ const fD=ms=>{const d=new Date(ms);return String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+d.getFullYear()};
+ const shop=settings.shopName||"MADA SHOP";
+ const np=()=>{pages.push(ops);ops="";rect(0,0,595,4,G);txt(shop+" - Résumé des ventes - "+label,40,28,8,0,GR);y=50};
+ const ensure=h=>{if(y+h>800)np()};
+ const sec=t=>{ensure(48);y+=10;rect(40,y-11,515,17,G);txt(t,46,y+1,9.5,1,W);y+=20};
+ const table=(cols,data,tot)=>{const head=()=>{rect(40,y-9,515,14,"0.90 0.94 0.92");cols.forEach(c=>txt(c.h,c.x,y+1,8,1,INK,c.al));y+=14};ensure(40);head();
+  data.forEach((r,i)=>{if(y>792){np();head()}if(i%2)rect(40,y-8,515,12,"0.975 0.985 0.98");cols.forEach((c,j)=>txt(tr(r[j],c.n),c.x,y,8,0,INK,c.al));y+=12});
+  if(!data.length){txt("Aucune donnée",48,y,8,0,GR);y+=12}
+  if(tot){ensure(16);line(40,y-8,555,G,.8);cols.forEach((c,j)=>{if(tot[j]!=null)txt(tot[j],c.x,y+4,8.5,1,INK,c.al)});y+=16}};
+ /* en-tête */
+ rect(0,0,595,6,G);txt(shop,40,40,18,1,G);txt("RÉSUMÉ DES VENTES - "+label.toUpperCase(),40,60,11,1,INK);
+ txt("Période : "+archDate(from)+" -> "+(to?archDate(to):archDate(Date.now())+" (en cours)"),40,75,9,0,GR);
+ txt("Généré le "+archDate(Date.now())+(currentUser?" par "+currentUser.name:""),40,87,8,0,GR);line(40,95,555,G,1.2);y=112;
+ /* indicateurs */
+ const rest=L.reduce((a,x)=>a+Math.max(0,saleTotal(x)-Number(x.paid||0)),0);
+ const kp=[["TOTAL VENTES",money(st.total)],["MONTANT ENCAISSÉ",money(st.cash)],["RESTE À ENCAISSER",money(rest)],["COMMANDES",String(st.count)],["PANIER MOYEN",money(st.count?Math.round(st.total/st.count):0)],["ARTICLES VENDUS",String(qtyT)],["TOTAL DÉPENSES",money(st.spent)],["CAISSE",money(st.caisse)]];
+ kp.forEach((q,i)=>{const bx=40+(i%2)*262,by=y+Math.floor(i/2)*42;rect(bx,by,253,36,"0.95 0.97 0.96");txt(q[0],bx+8,by+13,7.5,1,GR);txt(q[1],bx+8,by+29,13,1,G)});y+=4*42+6;
+ /* comparaison */
+ if(pst){sec("COMPARAISON avec "+prevLabel);const cmp=(n,c,p,m)=>{const d=c-p,pc=p?((d>=0?"+":"")+(d/p*100).toFixed(1)+" %"):"-";return[n,m?money(p):String(p),m?money(c):String(c),(d>=0?"+":"-")+(m?money(Math.abs(d)):Math.abs(d)),pc]};
+  table([{h:"Indicateur",x:40,n:30},{h:prevLabel,x:290,al:"r",n:18},{h:label,x:395,al:"r",n:18},{h:"Écart",x:480,al:"r",n:16},{h:"%",x:555,al:"r",n:10}],[cmp("Total ventes",st.total,pst.total,1),cmp("Montant encaissé",st.cash,pst.cash,1),cmp("Commandes",st.count,pst.count,0),cmp("Total dépenses",st.spent,pst.spent,1),cmp("Caisse",st.caisse,pst.caisse,1)])}
+ /* produits */
+ sec("VENTES PAR PRODUIT / ARTICLE");
+ table([{h:"Produit / article",x:40,n:52},{h:"Qté",x:360,al:"r",n:8},{h:"Montant",x:465,al:"r",n:16},{h:"% du total",x:555,al:"r",n:10}],prodL.map(([n,o])=>[n,String(o.q),money(o.t),prodT?(o.t/prodT*100).toFixed(1)+" %":"-"]),["TOTAL",String(qtyT),money(prodT),null]);
+ /* jours */
+ sec("VENTES PAR JOUR");const dl=Object.keys(day).sort();
+ table([{h:"Date",x:40,n:12},{h:"Commandes",x:250,al:"r",n:10},{h:"Total",x:400,al:"r",n:16},{h:"Moyenne / commande",x:555,al:"r",n:16}],dl.map(d=>[d.split("-").reverse().join("/"),String(day[d].n),money(day[d].t),money(Math.round(day[d].t/day[d].n))]),["TOTAL",String(rows.length),money(rows.reduce((a,x)=>a+amt(x),0)),null]);
+ /* vendeurs */
+ sec("VENTES PAR VENDEUR");const vl=Object.entries(sel).sort((a,b)=>b[1].t-a[1].t),vT=vl.reduce((a,x)=>a+x[1].t,0);
+ table([{h:"Vendeur",x:40,n:34},{h:"Commandes",x:300,al:"r",n:10},{h:"Total",x:440,al:"r",n:16},{h:"%",x:555,al:"r",n:10}],vl.map(([n,o])=>[n,String(o.n),money(o.t),vT?(o.t/vT*100).toFixed(1)+" %":"-"]));
+ /* détail */
+ sec("DÉTAIL DES COMMANDES");
+ table([{h:"N°",x:40,n:15},{h:"Date",x:118,n:10},{h:"Client",x:172,n:24},{h:"Statut",x:300,n:24},{h:"Total",x:482,al:"r",n:14},{h:"Payé",x:555,al:"r",n:14}],
+  rows.map(s=>{const man=s.docType==="Livraison",stt=man?((s.delivery==="Récupération"?"Récupération":"Livraison")+(Number(s.paid||0)>=saleTotal(s)?" - payé":" - partiel")):statusOf(s);return[s.invoiceNo||"-",fD(new Date(s.date).getTime()||0),s.clientName||"Client de passage",stt,money(amt(s)),money(man?cashIn(s):Number(s.paid||0))]}),
+  ["TOTAL",null,null,null,money(st.total),money(st.cash)]);
+ /* dépenses */
+ sec("DÉPENSES / ACHATS");
+ table([{h:"Date",x:40,n:12},{h:"Type",x:110,n:14},{h:"Description",x:200,n:44},{h:"Montant",x:555,al:"r",n:16}],exps.map(e=>[String(e.date||"").split("-").reverse().join("/"),e.type||"",e.name||"",money(e.amount)]),["TOTAL",null,null,money(st.spent)]);
+ pages.push(ops);
+ const n=pages.length;pages=pages.map((c,i)=>{ops=c;txt("Page "+(i+1)+" / "+n,555,830,7.5,0,GR,"r");txt(shop,40,830,7.5,0,GR);return ops});
+ let objs=["<</Type/Catalog/Pages 2 0 R>>","<</Type/Pages/Count "+n+"/Kids["+pages.map((_,i)=>(5+2*i)+" 0 R").join(" ")+"]>>","<</Type/Font/Subtype/Type1/BaseFont/Helvetica/Encoding/WinAnsiEncoding>>","<</Type/Font/Subtype/Type1/BaseFont/Helvetica-Bold/Encoding/WinAnsiEncoding>>"];
+ pages.forEach((c,i)=>{objs.push("<</Type/Page/Parent 2 0 R/MediaBox[0 0 595 842]/Resources<</Font<</F1 3 0 R/F2 4 0 R>>>>/Contents "+(6+2*i)+" 0 R>>");objs.push("<</Length "+c.length+">>\nstream\n"+c+"endstream")});
+ let out="%PDF-1.4\n",offs=[];objs.forEach((o,i)=>{offs.push(out.length);out+=(i+1)+" 0 obj\n"+o+"\nendobj\n"});
+ let xr=out.length;out+="xref\n0 "+(objs.length+1)+"\n0000000000 65535 f \n"+offs.map(o=>String(o).padStart(10,"0")+" 00000 n \n").join("")+"trailer\n<</Size "+(objs.length+1)+"/Root 1 0 R>>\nstartxref\n"+xr+"\n%%EOF";
+ const bytes=Uint8Array.from(out,ch=>ch.charCodeAt(0)&255),name="Resume-ventes-"+(k<0?"en-cours":"archive-"+(k+1))+".pdf",file=new File([bytes],name,{type:"application/pdf"});
+ if(share&&navigator.canShare&&navigator.canShare({files:[file]})){navigator.share({files:[file],title:name}).catch(()=>{});return}
+ const a=document.createElement("a");a.href=URL.createObjectURL(file);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);notify("PDF enregistré : "+name)
+}catch(e){console.error(e);notify("Erreur PDF")}}
 (function(){const r=window.renderDashboard;window.renderDashboard=function(){const x=r.apply(this,arguments);try{archiveInfo()}catch(_){}return x}})();
 </script>
 </body>
